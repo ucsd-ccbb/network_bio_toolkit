@@ -7,6 +7,7 @@ Date: 10/13/17
 
 import pandas as pd
 import networkx as nx
+import mygene
 
 
 def load_slowkow(filename_list=['./slowkow_databases/TRED_TF.txt',
@@ -106,101 +107,97 @@ def create_TF_list(slowkow_bool=True,
 
     return list(set(TF_list))
 
-
-def load_and_process_small_STRING(filename="STRING_network.xlsx"):
-
-    """
-        This function loads a version of the STRING database to serve as our background network. It converts the STRING
-        excel file into a pandas dataframe and extracts the edge information from that dataframe. We create two dictionaries
-        to be used when creating a networkx graph: one maps edges to their weights, and the other maps edges to their
-        weight's sign (+ or -)
-
-        Args:
-            filename = string, the path to the STRING excel file
-
-        Returns: STRING_DF = Dataframe, a pandas dataframe of the entire STRING file
-                 db_edges = list, a list of tuples of the form (source, target, edge weight)
-                 db_sign_att = list, a list of tuples of the form (source, target, sign of edge weight)
-
-    """
+# Loss of 110/about 40000 edges do to removal of multiedges
+def load_small_STRING_to_digraph(filename="../STRING_network.xlsx"):
 
     # Load STRING database as background network
     STRING_DF = pd.read_excel(filename)
+    STRING_DF.drop(['ID1','ID2','Source_Type','Sign_Score','NumberOfScreens','Interaction_Database'], axis=1, inplace=True)
+    STRING_DF.rename(index=str, columns={'Symbol1':'source', 'Symbol2':'target','Edge_Sign':'sign','Weight':'weight'}, inplace = True)
 
-    # convert sources (sym1) and targets (sym2) to all caps
-    sym1_list = STRING_DF.Symbol1.str.upper()
-    sym2_list = STRING_DF.Symbol2.str.upper()
+    # make all gene symbol names upper case
+    STRING_DF = pd.concat([STRING_DF[col].astype(str).str.upper() for col in STRING_DF.columns], axis=1)
 
-    # make an edge list with associated edge weight (db_edges)
-    weight_list = STRING_DF.Weight
-    db_edges = zip(sym1_list, sym2_list, weight_list)
+    # mark sign attribute as +1 for activating and -1 for inhibiting
+    STRING_DF[STRING_DF == '+'] = 1
+    STRING_DF[STRING_DF == '-'] = -1
 
-    # make an edge list with associated activating (+)/inhibiting (-) sign (db_sign_att)
-    sign_list = STRING_DF.Edge_Sign
-    sign_num_list = []
-    for sign in sign_list:
-        if str(sign) == '+':
-            sign_num_list.append(1)
-        elif str(sign) == '-':
-            sign_num_list.append(-1)
-        else:
-            sign_num_list.append(0)
-    db_sign_att = zip(sym1_list, sym2_list, sign_num_list)
+    # make digraph
+    STRING_DF['weight'] = map(lambda x: float(x), STRING_DF['weight'])
+    G_str = nx.from_pandas_dataframe(STRING_DF, 'source', 'target', ['sign', 'weight'], create_using=nx.DiGraph())
 
-    return STRING_DF, db_edges, db_sign_att
+    return G_str
 
 
-def filter_background(db_edges, db_sign_att, TF_list):
+def load_STRING_to_digraph(filename = "9606.protein.actions.v10.5.txt",confidence_filter=400):
 
-    """
-        This function takes as input two lists (as created by our load_and_process_STRING function), and removes
-        all of the edges whose source is not a TF designated in our TF list (created by a function such as create_TF_list).
+    # read STRING file to dataframe
+    df_full = pd.read_csv(filename, sep="\t")
 
-        Args:
-            db_edges = list, a list of tuples of the form (source, target, edge weight)
-            db_sign_att = list, a list of tuples of the form (source, target, sign of edge weight)
-            TF_list = list, a list of transcription factors produced from a function such as create_TF_list
+    df = df_full.loc[df_full['score'] > confidence_filter]  # filter by confidence
+    df_act = df.loc[df['action'] == 'activation']  # filter by activation and inhibition
+    df_inh = df.loc[df['action'] == 'inhibition']
 
-        Returns: edge_list_filtered = list of same form as db_edges, where only TF-as-source edges remain
-                 sign_att_list_filtered = list of same form as db_sign_att, where only TF-as-source edges remain
+    # make separate source and target lists for activating and inhibiting
+    sources_ut_a = [entry.split('.')[1] for entry in df_act['item_id_a']]
+    targets_ut_a = [entry.split('.')[1] for entry in df_act['item_id_b']]
+    sources_ut_i = [entry.split('.')[1] for entry in df_inh['item_id_a']]
+    targets_ut_i = [entry.split('.')[1] for entry in df_inh['item_id_b']]
 
-    """
+    # create edge with weight of 1
+    edges_ut_a = zip(sources_ut_a, targets_ut_a, [1] * len(sources_ut_a))
+    edges_ut_i = zip(sources_ut_i, targets_ut_i, [1] * len(sources_ut_i))
+    edges_ut = edges_ut_a + edges_ut_i
 
-    # extracting TR edge information from background database
-    edge_list_filtered = []
-    sign_att_list_filtered = []
-    for i in range(len(db_edges)):
-        if db_edges[i][0] in list(TF_list):
-            edge_list_filtered.append(db_edges[i])
-            sign_att_list_filtered.append(db_sign_att[i])
+    # create separate activating and inhibiting networks
+    G_a = nx.MultiDiGraph()
+    G_a.add_weighted_edges_from(edges_ut_a)
 
-    return edge_list_filtered, sign_att_list_filtered
+    G_i = nx.MultiDiGraph()
+    G_i.add_weighted_edges_from(edges_ut_i)
+
+    # add sign attribute
+    edges_with_keys_a = G_a.edges(keys=True)
+    signs_a = [1] * len(G_a.edges())
+    edges_to_sign_a = dict(zip(edges_with_keys_a, signs_a))
+    nx.set_edge_attributes(G_a, name='sign', values=edges_to_sign_a)
+
+    edges_with_keys_i = G_i.edges(keys=True)
+    signs_i = [-1] * len(G_i.edges())
+    edges_to_sign_i = dict(zip(edges_with_keys_i, signs_i))
+    nx.set_edge_attributes(G_i, name='sign', values=edges_to_sign_i)
+
+    # combine two graphs
+    G_str = nx.compose(G_a, G_i)
+
+    # make quick translation list
+    to_translate = list(set(zip(*edges_ut)[0] + zip(*edges_ut)[1]))
+
+    # translate quick list and make translation dictionary
+    mg = mygene.MyGeneInfo()
+    mg_temp = mg.querymany(to_translate, scopes='ensemblprotein', fields='symbol')
+    ensembl_list = [x['query'] for x in mg_temp]
+    symbol_list = [x['symbol'] if 'symbol' in x.keys() else 'None' for x in mg_temp]
+    ensembl_to_symbol = dict(zip(ensembl_list, symbol_list))
+
+    # relabel nodes with symbols
+    G_str = nx.relabel_nodes(G_str, ensembl_to_symbol)  # only keep the proteins that
+    G_str.remove_node('None')
+
+    return G_str
 
 
-def make_digraph(db_edges, db_sign_att, TF_list):
+def filter_digraph(G,TF_list):
 
-    """
-        This function filters down the to given lists of edges-and-attribute by calling filter_background. This removes
-        all edge from our lists whose source node is not a transcription factor (as specified by TF_list). Our function
-        then creates a networkX directed graph fom these two edges-and-attribute lists
-
-        Args:
-            db_edges = list, a list of tuples of the form (source, target, edge weight)
-            db_sign_att = list, a list of tuples of the form (source, target, sign of edge weight)
-            TF_list = list, a list of transcription factors produced from a function such as create_TF_list
-
-        Returns: DG = DiGraph, a networkX directed graph with only TF-as-source nodes, containing attributes 'weight'
-                      and 'sign'
-    """
-
-    # use only edges from background network associated with our TF list
-    edge_list_filtered, sign_att_list_filtered = filter_background(db_edges, db_sign_att, TF_list)
-
-    # create networkx digraph from weighted edge list, add sign edge attributes
-    DG = nx.DiGraph()
-    DG.add_weighted_edges_from(edge_list_filtered)
-    for i in range(len(sign_att_list_filtered)):
-        DG[sign_att_list_filtered[i][0]][sign_att_list_filtered[i][1]]['sign'] = sign_att_list_filtered[i][2]
+    if ((str(type(G)) == '<class \'networkx.classes.multidigraph.MultiDiGraph\'>') | (
+                str(type(G)) == '<class \'networkx.classes.multigraph.MultiGraph\'>')):
+        edges = G.out_edges(TF_list,keys = True, data = True)
+        DG = nx.MultiDiGraph()
+        DG.add_edges_from(edges)
+    else:
+        edges = G.out_edges(TF_list, data=True)
+        DG = nx.DiGraph()
+        DG.add_edges_from(edges)
 
     return DG
 
