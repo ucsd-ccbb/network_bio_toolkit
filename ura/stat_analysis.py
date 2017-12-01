@@ -254,3 +254,8 @@ def bias_corrected_tr_zscore(DG, DEG_list, TR_to_bias):
         TR_to_zscore[TR] = z_score
 
     return TR_to_zscore
+
+
+def top_dict_values(my_dict, activating = True, top = 3):
+    sorted_dict = sorted(my_dict.items(), key=lambda x: x[1], reverse=activating)
+    return dict(sorted_dict[:top])

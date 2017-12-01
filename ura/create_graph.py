@@ -33,13 +33,10 @@ def load_slowkow(filename_list=['./slowkow_databases/TRED_TF.txt',
 
     # read files formatted as \n separated items
     return_list = []
-    for file_name in filename_list:
-        with open(file_name) as f:
-            lines = f.read().split(sep)
-            return_list.extend(lines)
-
-    # convert everything to ALL CAPS
-    [x.upper() for x in return_list]
+    for skf in filename_list:
+        skdf = pd.read_csv(skf, names=['genes'], header=None)
+        to_add = list(skdf['genes'])
+        return_list.extend([x.upper() for x in to_add])
 
     # remove duplicates
     return set(return_list)
@@ -202,7 +199,7 @@ def filter_digraph(G,TF_list):
     return DG
 
 
-def load_DEG_with_up_downs(filename="differencially_expressed_genes.txt", filter_value=0.3):
+def create_DEG_list_Brin_file(filename="differencially_expressed_genes.txt", filter_value=0.3):
 
     """
         This function loads up a list of differentially expressed genes, removes genes with lfdr value greater
@@ -239,7 +236,19 @@ def load_DEG_with_up_downs(filename="differencially_expressed_genes.txt", filter
     return DEG_list, DEG_to_updown
 
 
-def add_updown_from_DEG(DG, DEG_filename="differencially_expressed_genes.txt", DEG_filter_value=0.3):
+def create_DEG_list_GEO(filename = 'geo2r_GSE2639_huvec.txt'):
+
+    df = pd.DataFrame.from_csv(filename, sep='\t')
+    df = df.loc[df['adj.P.Val'] < 0.05]  # filter by  p-value 5%
+    df.drop_duplicates(subset=['Gene.symbol'], keep='first', inplace=True)
+    DEG_list = df['Gene.symbol']
+    DEG_to_pvalue = dict(zip(df['Gene.symbol'], df['adj.P.Val']))
+    DEG_to_updown = dict(zip(df['Gene.symbol'], df['logFC']))
+
+    return DEG_list, DEG_to_pvalue, DEG_to_updown
+
+
+def add_updown_from_DEG(G, DEG_to_updown):
 
     """
         This function loads up a list of differentially expressed genes, removes genes with lfdr value greater
@@ -256,10 +265,20 @@ def add_updown_from_DEG(DG, DEG_filename="differencially_expressed_genes.txt", D
         Returns: DEG_list = list, a list of differencially expressed genes that have a lfdr value less than the filter value
     """
 
-    DEG_list, DEG_to_updown = load_DEG_with_up_downs(DEG_filename, DEG_filter_value)
+    # don't want to add updowns to original graph
+    if str(type(G)) == '<class \'networkx.classes.graph.Graph\'>':
+        DG = nx.Graph(G)
+    elif str(type(G)) == '<class \'networkx.classes.digraph.DiGraph\'>':
+        DG = nx.DiGraph(G)
+    elif str(type(G)) == '<class \'networkx.classes.multigraph.MultiGraph\'>':
+        DG = nx.MultiGraph(G)
+    elif str(type(G)) == '<class \'networkx.classes.multidigraph.MultiDiGraph\'>':
+        DG = nx.MultiDiGraph(G)
+    else:
+        return -1
 
     # get all the differencially expressed genes in DG
-    DEG_in_DG = set(DG.nodes()) & set(DEG_list)
+    DEG_in_DG = set(DG.nodes()) & set(DEG_to_updown.keys())
 
     # add node attribute to each node in DG if it exists, otherwise set to zero
     zero_dict = dict(zip(DG.nodes(), [0] * len(DG.nodes())))
@@ -267,6 +286,6 @@ def add_updown_from_DEG(DG, DEG_filename="differencially_expressed_genes.txt", D
         zero_dict[gene] = DEG_to_updown[gene]
     nx.set_node_attributes(DG, 'updown', zero_dict)
 
-    return DEG_list
+    return DG
 
 
