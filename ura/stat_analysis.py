@@ -8,6 +8,7 @@ Date: 10/13/17
 import scipy
 from scipy import stats
 import math
+import pandas as pd
 
 
 def tr_pvalues(DG, db_edges, DEG_list):
@@ -23,7 +24,7 @@ def tr_pvalues(DG, db_edges, DEG_list):
         Args:
             DG: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes
             db_edges: list of strings, list of all genes in your experiment's universe
-            DEG_list: list of strings, your list of differencially expressed genes
+            DEG_list: list of strings, your list of differentially expressed genes
 
         Returns: A dictionary that maps a transcription factor's gene symbol to its calculated p-vlaue log.
 
@@ -40,14 +41,36 @@ def tr_pvalues(DG, db_edges, DEG_list):
         N = len(list(set(background_list) & set(DEG_list)))  # number of DEG, picked from universe "at random"
 
         if x == 0:
-            TR_to_pvalue[TR] = 0;
+            TR_to_pvalue[TR] = 0
         else:
             TR_to_pvalue[TR] = -(scipy.stats.hypergeom.logsf(x, M, n, N, loc=0))  # remove unnecessary negative sign
 
-    return TR_to_pvalue
+    return pd.Series(TR_to_pvalue)
 
 
-def tr_zscore(DG, DEG_list):
+def tr_zscore(DG, DEG_list, auto_correct_bias = True, correct_for_bias = False, bias_filter = 0.25):
+
+    # automatically check for bias and use the appropriate zscore formula accordingly
+    if auto_correct_bias == True:
+        bias = calculate_bias(DG)
+        if abs(bias) > bias_filter:
+            print 'Graph has bias of ' + str(bias) + '. Adjusting z-score calculation accordingly.'
+            return bias_corrected_tr_zscore(DG, DEG_list, bias)
+        else:
+            return not_bias_corrected_tr_zscore(DG, DEG_list)
+
+    # override auto bias check and use specified formula
+    if correct_for_bias == True:
+        bias = calculate_bias(DG)
+        return bias_corrected_tr_zscore(DG, DEG_list, bias)
+    else:
+        return not_bias_corrected_tr_zscore(DG, DEG_list)
+
+
+
+
+
+def not_bias_corrected_tr_zscore(DG, DEG_list):
 
     """
         The goal of our z-score function is to predict the activation states of the TF's. We observe how a TF relates
@@ -59,7 +82,7 @@ def tr_zscore(DG, DEG_list):
 
         Args:
             DG: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes
-            DEG_list: list of strings, your list of differencially expressed genes
+            DEG_list: list of strings, your list of differentially expressed genes
 
         Returns: A dictionary that maps a transcription factor's gene symbol to its calculated z-score.
 
@@ -117,91 +140,38 @@ def tr_zscore(DG, DEG_list):
         # negative means inhibiting
         # 0 means could not be calculated
 
-    return TR_to_zscore
+    return pd.Series(TR_to_zscore)
 
 
-def calculate_bias(DG, DEG_list):
-    source_nodes = list(set(zip(*DG.edges())[0]))  # identifying unique source nodes in graph
+def calculate_bias(DG):
+    # calculate bias for up downs
+    data = list(zip(*DG.nodes(data=True))[1])
+    ups = [dict_list['updown'] for dict_list in data if dict_list['updown'] > 0]
+    downs = [dict_list['updown'] for dict_list in data if dict_list['updown'] < 0]
+    N_up = len(ups)
+    N_down = len(downs)
 
-    TR_to_bias = {}
-    for TR in source_nodes:
+    if (N_up + N_down) != 0:
+        u_data = (N_up - N_down) / float(N_up + N_down)
+    else:
+        u_data = 0
 
-        N_up = 0  # number of up regulated target
-        N_down = 0  # number of down regulated targets
+    # calculate bias for activating and inhbiting
+    data = list(zip(*DG.edges(data=True))[2])
+    act = [dict_list['sign'] for dict_list in data if dict_list['sign'] == 1]
+    inh = [dict_list['sign'] for dict_list in data if dict_list['sign'] == -1]
+    N_act = len(act)
+    N_inh = len(inh)
 
-        N_act = 0  # number of activating edges
-        N_inh = 0  # number of inhibiting edges
+    if (N_act + N_inh) != 0:
+        u_TR = (N_act - N_inh) / float(N_act + N_inh)
+    else:
+        u_TR = 0
 
-        N_problem = 0  # number of edges with errorous calculations
-
-        TRs_DEG_neighbors = set(DG.neighbors(TR)) & set(DEG_list)
-
-        for n in TRs_DEG_neighbors:
-
-            if ((str(type(DG)) == '<class \'networkx.classes.multidigraph.MultiDiGraph\'>') | (
-                str(type(DG)) == '<class \'networkx.classes.multigraph.MultiGraph\'>')):
-                for i in range(len(DG[TR][n])): # have to take into account multiple edges with the same mapping
-                    # count up edge signs
-                    sign_of_edge = DG[TR][n][i]['sign']
-                    if sign_of_edge == 1:
-                        N_act += 1
-                    elif sign_of_edge == -1:
-                        N_inh += 1
-                    else:
-                        N_problem += 1
-                        print "Issue with edge (" + str(TR) + ',' + str(n) + ') A/I'
-
-                    # count up node regulations
-                    up_down_of_n = (DG.node[n]['updown'] / abs(DG.node[n]['updown']))
-                    if up_down_of_n == 1:
-                        N_up += 1
-                    elif up_down_of_n == -1:
-                        N_down += 1
-                    else:
-                        N_problem += 1
-                        print "Issue with edge (" + str(TR) + ',' + str(n) + ') up/down'
-
-            else:
-                # count up edge signs
-                sign_of_edge = DG[TR][n]['sign']
-                if sign_of_edge == 1:
-                    N_act += 1
-                elif sign_of_edge == -1:
-                    N_inh += 1
-                else:
-                    N_problem += 1
-                    print "Issue with edge (" + str(TR) + ',' + str(n) + ') A/I'
-
-                # count up node regulations
-                up_down_of_n = (DG.node[n]['updown'] / abs(DG.node[n]['updown']))
-                if up_down_of_n == 1:
-                    N_up += 1
-                elif up_down_of_n == -1:
-                    N_down += 1
-                else:
-                    N_problem += 1
-                    print "Issue with edge (" + str(TR) + ',' + str(n) + ') up/down'
-
-        # calculate up down bias
-        if (N_up + N_down) != 0:
-            u_data = (N_up - N_down) / float(N_up + N_down)
-        else:
-            u_data = 0
-
-        # calculate act-inh bias
-        if (N_act + N_inh) != 0:
-            u_TR = (N_act - N_inh) / float(N_act + N_inh)
-        else:
-            u_TR = 0
-
-        # calculate overall bias
-        u = u_data * u_TR
-        TR_to_bias[TR] = u
-
-    return TR_to_bias
+    return u_data * u_TR
 
 
-def bias_corrected_tr_zscore(DG, DEG_list, TR_to_bias):
+def bias_corrected_tr_zscore(DG, DEG_list, bias):
     source_nodes = list(set(zip(*DG.edges())[0]))  # identifying unique source nodes in graph
 
     TR_to_zscore = {}
@@ -241,21 +211,46 @@ def bias_corrected_tr_zscore(DG, DEG_list, TR_to_bias):
                     # keep track of each target's weight
                 w.append(DG[TR][n]['weight'])
 
-        u = TR_to_bias[TR]
-
         # calculate bias-corrected z-score
         z_score_top = 0
         z_score_bottom = 0
         for i in range(len(w)):
-            z_score_top += (w[i] * (x[i] - u))
+            z_score_top += (w[i] * (x[i] - bias))
             z_score_bottom += (w[i] * w[i])
         z_score = z_score_top / ((z_score_bottom) ** (1 / 2))
 
         TR_to_zscore[TR] = z_score
 
-    return TR_to_zscore
+    return pd.Series(TR_to_zscore)
 
 
-def top_dict_values(my_dict, activating = True, top = 3):
-    sorted_dict = sorted(my_dict.items(), key=lambda x: x[1], reverse=activating)
-    return dict(sorted_dict[:top])
+
+def top_values(my_series, activating = True, absolute_value = False, top = 10):
+
+    # top activating and inhibiting, sort by strongest zscore or log(pvalue)
+    if absolute_value == True:
+        return my_series.abs().sort_values(ascending=False).head(10)
+
+    # top activating
+    if activating == True:
+        return my_series.sort_values(ascending=False).head(top)
+
+    # top inhibiting
+    else:
+        return my_series.sort_values(ascending=True).head(top)
+
+
+def rank(series, genes_to_rank, activating=True, absolute_value=False, print_to_stdout=False):
+    if absolute_value == True:
+        sorted(dict(series.abs()).items(), key=lambda x: x[1], reverse=True)
+    else:
+        if activating == True:
+            sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=True)
+        else:
+            sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=False)
+
+    genes = zip(*sorted_dict)[0]
+    index = range(len(sorted_dict))
+    gene_to_index = dict(zip(genes, index))
+
+    return pd.Series({k: gene_to_index.get(k, None) for k in genes_to_rank}).sort_values(ascending=True)

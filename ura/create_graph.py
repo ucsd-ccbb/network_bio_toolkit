@@ -199,23 +199,23 @@ def filter_digraph(G,TF_list):
     return DG
 
 
-def create_DEG_list_Brin_file(filename="differencially_expressed_genes.txt", filter_value=0.3):
+def create_DEG_list_Brin_file(filename="differentially_expressed_genes.txt", filter_value=0.3):
 
     """
         This function loads up a list of differentially expressed genes, removes genes with lfdr value greater
         than the specified filter value, then extracts the up/down regulation information associated with those genes.
 
         Args:
-            filename = string, path to our list of differencially expressed genes, containing up/down regulated information
+            filename = string, path to our list of differentially expressed genes, containing up/down regulated information
                        under column log2.89.12
             filter_value = float, cutoff lfdr value to filter our DEG's by
 
-        Returns: DEG_list = list, a list of differencially expressed genes that have a lfdr value less than the filter value
+        Returns: DEG_list = list, a list of differentially expressed genes that have a lfdr value less than the filter value
                  DEG_to_updown = dict, a dictionary that maps a DEG name to wether it is up regulated or down regulated. If
                                  no up/down regulation info, will set value to zero
     """
 
-    # load differencially expressed genes (experimental results)
+    # load differentially expressed genes (experimental results)
     DEG_db = pd.read_csv(filename, sep="\t")
 
     # filtering for lfdr < 0.3
@@ -236,10 +236,10 @@ def create_DEG_list_Brin_file(filename="differencially_expressed_genes.txt", fil
     return DEG_list, DEG_to_updown
 
 
-def create_DEG_list_GEO(filename = 'geo2r_GSE2639_huvec.txt'):
+def create_DEG_list_GEO(filename = 'geo2r_GSE2639_huvec.txt', p_value_filter = 0.05):
 
     df = pd.DataFrame.from_csv(filename, sep='\t')
-    df = df.loc[df['adj.P.Val'] < 0.05]  # filter by  p-value 5%
+    df = df.loc[df['adj.P.Val'] < p_value_filter]
     df.drop_duplicates(subset=['Gene.symbol'], keep='first', inplace=True)
     DEG_list = df['Gene.symbol']
     DEG_to_pvalue = dict(zip(df['Gene.symbol'], df['adj.P.Val']))
@@ -258,11 +258,11 @@ def add_updown_from_DEG(G, DEG_to_updown):
 
         Args:
             DG = DiGraph, a networkX directed graph
-            DEG_filename = string, path to our list of differencially expressed genes, containing up/down regulated information
+            DEG_filename = string, path to our list of differentially expressed genes, containing up/down regulated information
                        under column log2.89.12
             DEG_filter_value = float, cutoff lfdr value to filter our DEG's by
 
-        Returns: DEG_list = list, a list of differencially expressed genes that have a lfdr value less than the filter value
+        Returns: DEG_list = list, a list of differentially expressed genes that have a lfdr value less than the filter value
     """
 
     # don't want to add updowns to original graph
@@ -277,7 +277,7 @@ def add_updown_from_DEG(G, DEG_to_updown):
     else:
         return -1
 
-    # get all the differencially expressed genes in DG
+    # get all the differentially expressed genes in DG
     DEG_in_DG = set(DG.nodes()) & set(DEG_to_updown.keys())
 
     # add node attribute to each node in DG if it exists, otherwise set to zero
