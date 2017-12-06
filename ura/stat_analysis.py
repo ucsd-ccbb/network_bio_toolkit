@@ -44,10 +44,21 @@ def tr_pvalues(DG, db_edges, DEG_list):
             TR_to_pvalue[TR] = 0
         else:
             TR_to_pvalue[TR] = -(scipy.stats.hypergeom.logsf(x, M, n, N, loc=0))  # remove unnecessary negative sign
+            
+            
+        # ---------------------------------------------------------------
+        # SBR: We are getting a lot of infs --> look into why this is happening
+        # ---------------------------------------------------------------
+        TR_to_pvalue = pd.Series(TR_to_pvalue).sort_values(ascending=False) # SBR added sorting to output
 
-    return pd.Series(TR_to_pvalue)
+    return TR_to_pvalue
 
 
+# ---------------------------------------------------------------
+# SBR: I think having both auto_correct_bias and correct_for_bias is a little redundant.
+# Consider just including correct_for_bias, and bias_filter (keep default at 25).  You can
+# still override by setting bias_filter really high (1)
+# ---------------------------------------------------------------
 def tr_zscore(DG, DEG_list, auto_correct_bias = True, correct_for_bias = False, bias_filter = 0.25):
 
     # automatically check for bias and use the appropriate zscore formula accordingly
@@ -140,6 +151,8 @@ def not_bias_corrected_tr_zscore(DG, DEG_list):
         # negative means inhibiting
         # 0 means could not be calculated
 
+        TR_to_zscore = pd.Series(TR_to_zscore).sort_values(ascending=False) # SBR sorted output
+        
     return pd.Series(TR_to_zscore)
 
 
@@ -170,7 +183,9 @@ def calculate_bias(DG):
 
     return u_data * u_TR
 
-
+# ---------------------------------------------------------------
+# SBR: I might suggest consolidating bias_corrected and not_bias_corrected functions
+# ---------------------------------------------------------------
 def bias_corrected_tr_zscore(DG, DEG_list, bias):
     source_nodes = list(set(zip(*DG.edges())[0]))  # identifying unique source nodes in graph
 
@@ -220,6 +235,8 @@ def bias_corrected_tr_zscore(DG, DEG_list, bias):
         z_score = z_score_top / ((z_score_bottom) ** (1 / 2))
 
         TR_to_zscore[TR] = z_score
+        
+        TR_to_zscore = pd.Series(TR_to_zscore).sort_values(ascending=False) # SBR sorted output
 
     return pd.Series(TR_to_zscore)
 

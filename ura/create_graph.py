@@ -221,13 +221,24 @@ def create_DEG_list_Brin_file(filename="differentially_expressed_genes.txt", fil
     # filtering for lfdr < 0.3
     DEG_list = []
     DEG_to_updown = {}
+    
+    # -------- SBR: some notes------------
+    
+    # column names are too specific ('lfdr.89.12')
+
+    # can probably improve efficiency of this loop.  Something like:
+    # DEG_db.index=DEG_db['symbol']
+    # DEG_to_updown = DEG_db[DEG_db['lfdr.89.12']<filter_value]['log2.89.12'].dropna()
+    
+    # -------------------------------
+    
     for i in range(len(DEG_db)):
 
         # removing Nan values
         if str(DEG_db.symbol[i]).upper() != 'NAN':
 
             # filtering DEG list by lfdr < filter_value
-            if (DEG_db['lfdr.89.12'][i] < filter_value):
+            if (DEG_db['lfdr.89.12'][i] < filter_value):  
                 DEG_list.append(str(DEG_db.symbol[i]).upper())
 
                 # creating dictionary between DEG symbols and their up/down value
@@ -236,10 +247,16 @@ def create_DEG_list_Brin_file(filename="differentially_expressed_genes.txt", fil
     return DEG_list, DEG_to_updown
 
 
+# ----------
+# SBR: this function is too specific.  We should try to think of a function which accepts an input with standardized columns,
+# and require that the user supplies this.
+# ----------
 def create_DEG_list_GEO(filename = 'geo2r_GSE2639_huvec.txt', p_value_filter = 0.05):
 
     df = pd.DataFrame.from_csv(filename, sep='\t')
     df = df.loc[df['adj.P.Val'] < p_value_filter]
+    
+    # ----- SBR: should check that file is sorted first, before dropping duplicates ---------
     df.drop_duplicates(subset=['Gene.symbol'], keep='first', inplace=True)
     DEG_list = df['Gene.symbol']
     DEG_to_pvalue = dict(zip(df['Gene.symbol'], df['adj.P.Val']))
