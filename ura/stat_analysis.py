@@ -53,31 +53,16 @@ def tr_pvalues(DG, db_edges, DEG_list):
 
     return TR_to_pvalue
 
-# ---------------------------------------------------------------
-# SBR: I think having both auto_correct_bias and correct_for_bias is a little redundant.
-# Consider just including correct_for_bias, and bias_filter (keep default at 25).  You can
-# still override by setting bias_filter really high (1)
-# ---------------------------------------------------------------
-def tr_zscore(DG, DEG_list, auto_correct = True, use_bias_formula = False, bias_filter = 0.25):
+# to force use of unbiased calculation, set bias filter to 1
+# to force use of biased calculation, set bias filter to -1
+def tr_zscore(DG, DEG_list, bias_filter = 0.25):
 
-    # automatically check for bias and use the appropriate zscore formula accordingly
-    if auto_correct == True:
-        bias = calculate_bias(DG)
-        if abs(bias) > bias_filter:
-            print 'Graph has bias of ' + str(bias) + '. Adjusting z-score calculation accordingly.'
-            return bias_corrected_tr_zscore(DG, DEG_list, bias)
-        else:
-            return not_bias_corrected_tr_zscore(DG, DEG_list)
-
-    # override auto bias check and use specified formula
-    if use_bias_formula == True:
-        bias = calculate_bias(DG)
+    bias = calculate_bias(DG)
+    if abs(bias) > bias_filter:
+        print 'Graph has bias of ' + str(bias) + '. Adjusting z-score calculation accordingly.'
         return bias_corrected_tr_zscore(DG, DEG_list, bias)
     else:
         return not_bias_corrected_tr_zscore(DG, DEG_list)
-
-
-
 
 
 def not_bias_corrected_tr_zscore(DG, DEG_list):
@@ -240,36 +225,83 @@ def bias_corrected_tr_zscore(DG, DEG_list, bias):
     return pd.Series(TR_to_zscore)
 
 
+def rank_and_score_df(series, genes_to_rank, value_name = 'z-score', abs_value = True, act = False, remove_dups = False):
 
-def top_values(my_series, activating = True, absolute_value = False, top = 10):
+    scores = series.loc[genes_to_rank]
+    ranks, num_ranks = rank(series, genes_to_rank, abs_value, act, remove_dups)
+
+    df = pd.concat([ranks, scores], axis=1)
+    df = df.rename(columns={0: 'rank', 1: value_name})
+
+    df = df.sort_values(['rank'], ascending=True)
+    return df
+
+
+
+
+def top_values(series, act = True, abs_value = False, top = 10):
 
     # top activating and inhibiting, sort by strongest zscore or log(pvalue)
-    if absolute_value == True:
-        top_series_abs = my_series.abs().sort_values(ascending=False).head(top)
+    if abs_value == True:
+        top_series_abs = series.abs().sort_values(ascending=False).head(top)
         top_genes = list(top_series_abs.index)
-        top_values = [my_series[gene] for gene in top_genes]
+        top_values = [series[gene] for gene in top_genes]
         return pd.Series(top_values, index=top_genes)
 
     # top activating
-    if activating == True:
-        return my_series.sort_values(ascending=False).head(top)
+    if act == True:
+        return series.sort_values(ascending=False).head(top)
 
     # top inhibiting
     else:
-        return my_series.sort_values(ascending=True).head(top)
+        return series.sort_values(ascending=True).head(top)
 
 
-def rank(series, genes_to_rank, activating=True, absolute_value=False, print_to_stdout=False):
-    if absolute_value == True:
-        sorted_dict = sorted(dict(series.abs()).items(), key=lambda x: x[1], reverse=True)
-    else:
-        if activating == True:
-            sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=True)
+def rank(series, genes_to_rank, abs_value=False, act=True, remove_dups = False):
+
+    # genes with the same p_value/zscore will be given different ranks depending on the order they are stored in
+    if remove_dups == False:
+        if abs_value == True:
+            sorted_dict = sorted(dict(series.abs()).items(), key=lambda x: x[1], reverse=True)
         else:
-            sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=False)
+            if act == True:
+                sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=True)
+            else:
+                sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=False)
 
-    genes = zip(*sorted_dict)[0]
-    index = range(len(sorted_dict))
-    gene_to_index = dict(zip(genes, index))
+        genes = zip(*sorted_dict)[0]
+        index = range(len(sorted_dict))
+        gene_to_index = dict(zip(genes, index)) # mapping genes to their order in the sorted gene list
 
-    return pd.Series({k: gene_to_index.get(k, None) for k in genes_to_rank}).sort_values(ascending=True)
+        return_series = pd.Series({k: gene_to_index.get(k, None) for k in genes_to_rank}).sort_values(ascending=True)
+        num_ranks = len(gene_to_index)
+        return return_series, num_ranks
+
+    # genes with the same p_value will be given the same rank
+    else:
+        if abs_value == True:
+            sorted_dict = sorted(dict(series.abs()).items(), key=lambda x: x[1], reverse=True)
+            rank_values = sorted(set(abs(series.values)), reverse = True)
+        else:
+            if act == True:
+                sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=True)
+                rank_values = sorted(set(series.values), reverse = True)
+            else:
+                sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=False)
+                rank_values = sorted(set(series.values), reverse = False)
+
+        genes = zip(*sorted_dict)[0]
+        index = range(len(rank_values))
+        value_to_index = dict(zip(rank_values, index)) # mapping the sorted set of possible values to their order
+
+        if abs_value == True:
+            gene_index_list = [value_to_index[abs(series[gene])] for gene in genes]  # finding the rank for each gene
+        else:
+            gene_index_list = [value_to_index[series[gene]] for gene in genes] # finding the rank for each gene
+
+        gene_to_index = dict(zip(genes, gene_index_list)) # mapping genes to their rank
+
+        return_series = pd.Series({k: gene_to_index.get(k, None) for k in genes_to_rank}).sort_values(ascending=True)
+        num_ranks = str(len(index))
+
+        return return_series, num_ranks
