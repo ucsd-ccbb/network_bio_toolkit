@@ -199,51 +199,14 @@ def filter_digraph(G,TF_list):
     return DG
 
 
-def create_DEG_list_Brin_file(filename="differentially_expressed_genes.txt", filter_value=0.3):
-
-    """
-        This function loads up a list of differentially expressed genes, removes genes with lfdr value greater
-        than the specified filter value, then extracts the up/down regulation information associated with those genes.
-
-        Args:
-            filename = string, path to our list of differentially expressed genes, containing up/down regulated information
-                       under column log2.89.12
-            filter_value = float, cutoff lfdr value to filter our DEG's by
-
-        Returns: DEG_list = list, a list of differentially expressed genes that have a lfdr value less than the filter value
-                 DEG_to_updown = dict, a dictionary that maps a DEG name to wether it is up regulated or down regulated. If
-                                 no up/down regulation info, will set value to zero
-    """
-
-    # load differentially expressed genes (experimental results)
-    DEG_db = pd.read_csv(filename, sep="\t")
-
-    # filtering for lfdr < 0.3
-    DEG_list = []
-    DEG_to_updown = {}
-    for i in range(len(DEG_db)):
-
-        # removing Nan values
-        if str(DEG_db.symbol[i]).upper() != 'NAN':
-
-            # filtering DEG list by lfdr < filter_value
-            if (DEG_db['lfdr.89.12'][i] < filter_value):
-                DEG_list.append(str(DEG_db.symbol[i]).upper())
-
-                # creating dictionary between DEG symbols and their up/down value
-                DEG_to_updown[str(DEG_db.symbol[i]).upper()] = DEG_db['log2.89.12'][i]
-
-    return DEG_list, DEG_to_updown
-
-
-def create_DEG_list_GEO(filename = 'geo2r_GSE2639_huvec.txt', p_value_filter = 0.05):
+def create_DEG_list(filename, p_value_filter = 0.05):
 
     df = pd.DataFrame.from_csv(filename, sep='\t')
-    df = df.loc[df['adj.P.Val'] < p_value_filter]
-    df.drop_duplicates(subset=['Gene.symbol'], keep='first', inplace=True)
-    DEG_list = df['Gene.symbol']
-    DEG_to_pvalue = dict(zip(df['Gene.symbol'], df['adj.P.Val']))
-    DEG_to_updown = dict(zip(df['Gene.symbol'], df['logFC']))
+    df = df.loc[df['adj_p_value'] < p_value_filter]
+    df.drop_duplicates(subset=['gene_symbol'], keep='first', inplace=True)
+    DEG_list = df['gene_symbol']
+    DEG_to_pvalue = dict(zip(df['gene_symbol'], df['adj_p_value']))
+    DEG_to_updown = dict(zip(df['gene_symbol'], df['fold_change']))
 
     return DEG_list, DEG_to_pvalue, DEG_to_updown
 

@@ -48,10 +48,10 @@ def tr_pvalues(DG, db_edges, DEG_list):
     return pd.Series(TR_to_pvalue)
 
 
-def tr_zscore(DG, DEG_list, auto_correct_bias = True, correct_for_bias = False, bias_filter = 0.25):
+def tr_zscore(DG, DEG_list, auto_correct = True, use_bias_formula = False, bias_filter = 0.25):
 
     # automatically check for bias and use the appropriate zscore formula accordingly
-    if auto_correct_bias == True:
+    if auto_correct == True:
         bias = calculate_bias(DG)
         if abs(bias) > bias_filter:
             print 'Graph has bias of ' + str(bias) + '. Adjusting z-score calculation accordingly.'
@@ -60,7 +60,7 @@ def tr_zscore(DG, DEG_list, auto_correct_bias = True, correct_for_bias = False, 
             return not_bias_corrected_tr_zscore(DG, DEG_list)
 
     # override auto bias check and use specified formula
-    if correct_for_bias == True:
+    if use_bias_formula == True:
         bias = calculate_bias(DG)
         return bias_corrected_tr_zscore(DG, DEG_list, bias)
     else:
@@ -229,7 +229,10 @@ def top_values(my_series, activating = True, absolute_value = False, top = 10):
 
     # top activating and inhibiting, sort by strongest zscore or log(pvalue)
     if absolute_value == True:
-        return my_series.abs().sort_values(ascending=False).head(10)
+        top_series_abs = my_series.abs().sort_values(ascending=False).head(top)
+        top_genes = list(top_series_abs.index)
+        top_values = [my_series[gene] for gene in top_genes]
+        return pd.Series(top_values, index=top_genes)
 
     # top activating
     if activating == True:
@@ -242,7 +245,7 @@ def top_values(my_series, activating = True, absolute_value = False, top = 10):
 
 def rank(series, genes_to_rank, activating=True, absolute_value=False, print_to_stdout=False):
     if absolute_value == True:
-        sorted(dict(series.abs()).items(), key=lambda x: x[1], reverse=True)
+        sorted_dict = sorted(dict(series.abs()).items(), key=lambda x: x[1], reverse=True)
     else:
         if activating == True:
             sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=True)
