@@ -11,7 +11,7 @@ import math
 import pandas as pd
 
 
-def tr_pvalues(DG, db_edges, DEG_list):
+def tr_pvalues(DG_TF, DG_universe, DEG_list):
 
     """
         Our p-value function calculates the log of the p-value for every TF in the graph using [scipy.stats.hypergeom.logsf]
@@ -22,7 +22,7 @@ def tr_pvalues(DG, db_edges, DEG_list):
         Note that if a TF is given a value of zero, that means none of the TF's targets were DEG's.
 
         Args:
-            DG: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes
+            DG_TF: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes
             db_edges: list of strings, list of all genes in your experiment's universe
             DEG_list: list of strings, your list of differentially expressed genes
 
@@ -30,14 +30,15 @@ def tr_pvalues(DG, db_edges, DEG_list):
 
     """
 
-    source_nodes = list(set(zip(*DG.edges())[0]))  # identifying unique source nodes in graph
-    background_list = list(set(zip(*db_edges)[0]) | set(zip(*db_edges)[1]))
+    source_nodes = list(set(zip(*DG_TF.edges())[0]))  # identifying unique source nodes in graph
+    DG_universe_edges = list(DG_universe.edges())
+    background_list = list(set(zip(*DG_universe_edges)[0]) | set(zip(*DG_universe_edges)[1]))
 
     TR_to_pvalue = {}
     for TR in source_nodes:
-        x = len(list(set(DG.neighbors(TR)) & set(DEG_list)))  # per TR, observed overlap between TR neighbors and DEG_list
+        x = len(list(set(DG_TF.neighbors(TR)) & set(DEG_list)))  # per TR, observed overlap between TR neighbors and DEG_list
         M = len(background_list)  # num unique nodes in universe, aka background network (STRING)
-        n = len(DG.neighbors(TR))  # per TR, number of targets for that TR
+        n = len(DG_TF.neighbors(TR))  # per TR, number of targets for that TR
         N = len(list(set(background_list) & set(DEG_list)))  # number of DEG, picked from universe "at random"
 
         if x == 0:
@@ -45,16 +46,27 @@ def tr_pvalues(DG, db_edges, DEG_list):
         else:
             TR_to_pvalue[TR] = -(scipy.stats.hypergeom.logsf(x, M, n, N, loc=0))  # remove unnecessary negative sign
             
-            
+#        if TR_to_pvalue[TR] == float('Inf'):
+#            print 'Number of TR neighbor that are in DEG_list: ' + str(x)
+#            print 'Number of TF neighbors: '+ str(n)
+#            print '\n'
+
         # ---------------------------------------------------------------
         # SBR: We are getting a lot of infs --> look into why this is happening
         # ---------------------------------------------------------------
+        # MJW it happens when all the TR's neighbors are DEG's
         TR_to_pvalue = pd.Series(TR_to_pvalue).sort_values(ascending=False) # SBR added sorting to output
 
     return TR_to_pvalue
 
-# to force use of unbiased calculation, set bias filter to 1
-# to force use of biased calculation, set bias filter to -1
+
+# ---------------------------------------------------------------
+# SBR: I think having both auto_correct_bias and correct_for_bias is a little redundant.
+# Consider just including correct_for_bias, and bias_filter (keep default at 25).  You can
+# still override by setting bias_filter really high (1)
+# ---------------------------------------------------------------
+# MJW to force use of unbiased calculation, set bias filter to 1
+# MJW to force use of biased calculation, set bias filter to -1
 def tr_zscore(DG, DEG_list, bias_filter = 0.25):
 
     bias = calculate_bias(DG)
@@ -64,7 +76,10 @@ def tr_zscore(DG, DEG_list, bias_filter = 0.25):
     else:
         return not_bias_corrected_tr_zscore(DG, DEG_list)
 
-
+# ---------------------------------------------------------------
+# SBR: I might suggest consolidating bias_corrected and not_bias_corrected functions
+# ---------------------------------------------------------------
+# MJW right now using as helper functions. The user never calls these (they call tr_zscore)
 def not_bias_corrected_tr_zscore(DG, DEG_list):
 
     """

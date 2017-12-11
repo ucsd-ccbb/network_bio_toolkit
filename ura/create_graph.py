@@ -199,10 +199,26 @@ def filter_digraph(G,TF_list):
     return DG
 
 
+# -------- SBR: some notes------------
+# column names are too specific ('lfdr.89.12')
+# can probably improve efficiency of this loop.  Something like:
+# DEG_db.index=DEG_db['symbol']
+# DEG_to_updown = DEG_db[DEG_db['lfdr.89.12']<filter_value]['log2.89.12'].dropna()
+# -------------------------------
+
+# ----------
+# SBR: this function is too specific.  We should try to think of a function which accepts an input with standardized columns,
+# and require that the user supplies this.
+# ----------
+
+# MJW consolidated DEG loading functions, now has standard input
+
 def create_DEG_list(filename, p_value_filter = 0.05):
 
     df = pd.DataFrame.from_csv(filename, sep='\t')
     df = df.loc[df['adj_p_value'] < p_value_filter]
+    # ----- SBR: should check that file is sorted first, before dropping duplicates ---------
+    # MJW Yes, it does that already when it filters
     df.drop_duplicates(subset=['gene_symbol'], keep='first', inplace=True)
     DEG_list = df['gene_symbol']
     DEG_to_pvalue = dict(zip(df['gene_symbol'], df['adj_p_value']))
