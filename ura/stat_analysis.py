@@ -23,10 +23,10 @@ def tr_pvalues(DG_TF, DG_universe, DEG_list):
 
         Args:
             DG_TF: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes
-            db_edges: list of strings, list of all genes in your experiment's universe
+            DG_universe: a networkx graph containing all interactions in our universe
             DEG_list: list of strings, your list of differentially expressed genes
 
-        Returns: A dictionary that maps a transcription factor's gene symbol to its calculated p-vlaue log.
+        Returns: A sorted Pandas Series that maps a transcription factor's gene symbol to its calculated p-vlaue log.
 
     """
 
@@ -35,52 +35,70 @@ def tr_pvalues(DG_TF, DG_universe, DEG_list):
     background_list = list(set(zip(*DG_universe_edges)[0]) | set(zip(*DG_universe_edges)[1]))
 
     TR_to_pvalue = {}
+    x_n_to_p_score = {}
+    M = len(background_list)  # num unique nodes in universe, aka background network (STRING)
+    N = len(list(set(background_list) & set(DEG_list)))  # number of DEG, picked from universe "at random"
+
     for TR in source_nodes:
         x = len(list(set(DG_TF.neighbors(TR)) & set(DEG_list)))  # per TR, observed overlap between TR neighbors and DEG_list
-        M = len(background_list)  # num unique nodes in universe, aka background network (STRING)
         n = len(DG_TF.neighbors(TR))  # per TR, number of targets for that TR
-        N = len(list(set(background_list) & set(DEG_list)))  # number of DEG, picked from universe "at random"
 
-        if x == 0:
-            TR_to_pvalue[TR] = 0
+        if (x,n) in x_n_to_p_score: # if we have computed this value before
+            TR_to_pvalue[TR] = x_n_to_p_score[(x,n)]
+
         else:
-            TR_to_pvalue[TR] = -(scipy.stats.hypergeom.logsf(x, M, n, N, loc=0))  # remove unnecessary negative sign
-            
-#        if TR_to_pvalue[TR] == float('Inf'):
-#            print 'Number of TR neighbor that are in DEG_list: ' + str(x)
-#            print 'Number of TF neighbors: '+ str(n)
-#            print '\n'
+            if x == 0:
+                TR_to_pvalue[TR] = 0
+            elif x == n:
+                TR_to_pvalue[TR] = float('Inf')
+            else:
+                TR_to_pvalue[TR] = -(scipy.stats.hypergeom.logsf(x, M, n, N, loc=0))  # remove unnecessary negative sign
 
-        # ---------------------------------------------------------------
-        # SBR: We are getting a lot of infs --> look into why this is happening
-        # ---------------------------------------------------------------
-        # MJW it happens when all the TR's neighbors are DEG's
-        TR_to_pvalue = pd.Series(TR_to_pvalue).sort_values(ascending=False) # SBR added sorting to output
+            x_n_to_p_score[(x,n)] = TR_to_pvalue[TR] # record that we have calculated this value
+
+        TR_to_pvalue = pd.Series(TR_to_pvalue).sort_values(ascending=False)
 
     return TR_to_pvalue
 
 
-# ---------------------------------------------------------------
-# SBR: I think having both auto_correct_bias and correct_for_bias is a little redundant.
-# Consider just including correct_for_bias, and bias_filter (keep default at 25).  You can
-# still override by setting bias_filter really high (1)
-# ---------------------------------------------------------------
 # MJW to force use of unbiased calculation, set bias filter to 1
 # MJW to force use of biased calculation, set bias filter to -1
-def tr_zscore(DG, DEG_list, bias_filter = 0.25):
+def tf_zscore(DG, DEG_list, bias_filter = 0.25):
+    """
+        The goal of our z-score function is to predict the activation states of the TF's. We observe how a TF relates
+        to each of its targets to make our prediction. We compare each targets' observed gene regulation (either up or
+        down) and each TF-target interaction (whether it is activating or inhibiting) to conclude whether a TF is
+        activating or inhibiting. A positive value indicates activating while a negative value indicates inhibiting.
+        A value of zero means that we did not have enough information about the target or TF-target interaction to
+        make the prediction.
+
+        This function call one of two helper z-score functions, either bias_corrected_tf_zscore or not_bias_corrected_tf_zscore,
+        based on how biased the graph is (indicated by the bias_filter parameter). The "bias" of the graph is a number that
+        indicates if the graph has notibly more activating or inhibiting edges, and to what degree. It is calculated using our
+        calculate_bias function.
+
+        **If the user wishes to explicitly use the biased z-score formula (bias_corrected_tf_zscore), set bias_filter to 0.
+        For the unbiased formula (not_bias_corrected_tf_zscore), set bias_filter to 1.
+
+        Args:
+            DG: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes
+                ** DG must have 'updown' and 'sign' attributes **
+            DEG_list: list of strings, your list of differentially expressed genes
+            bias_filter: number between 0 and 1, threshold to calculate z-score using biased formula
+
+        Returns: A sorted Pandas Series that maps a transcription factor's gene symbol to its calculated z-score.
+
+    """
 
     bias = calculate_bias(DG)
     if abs(bias) > bias_filter:
         print 'Graph has bias of ' + str(bias) + '. Adjusting z-score calculation accordingly.'
-        return bias_corrected_tr_zscore(DG, DEG_list, bias)
+        return bias_corrected_tf_zscore(DG, DEG_list, bias)
     else:
-        return not_bias_corrected_tr_zscore(DG, DEG_list)
+        return not_bias_corrected_tf_zscore(DG, DEG_list)
 
-# ---------------------------------------------------------------
-# SBR: I might suggest consolidating bias_corrected and not_bias_corrected functions
-# ---------------------------------------------------------------
-# MJW right now using as helper functions. The user never calls these (they call tr_zscore)
-def not_bias_corrected_tr_zscore(DG, DEG_list):
+
+def not_bias_corrected_tf_zscore(DG, DEG_list):
 
     """
         The goal of our z-score function is to predict the activation states of the TF's. We observe how a TF relates
@@ -90,11 +108,14 @@ def not_bias_corrected_tr_zscore(DG, DEG_list):
         A value of zero means that we did not have enough information about the target or TF-target interaction to
         make the prediction.
 
+        This calculation does NOT take into account network bias.
+
         Args:
-            DG: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes
+            DG: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes.
+                ** DG must have 'updown' and 'sign' attributes **
             DEG_list: list of strings, your list of differentially expressed genes
 
-        Returns: A dictionary that maps a transcription factor's gene symbol to its calculated z-score.
+        Returns: A sorted Pandas Series that maps a transcription factor's gene symbol to its calculated z-score.
 
     """
 
@@ -156,6 +177,24 @@ def not_bias_corrected_tr_zscore(DG, DEG_list):
 
 
 def calculate_bias(DG):
+    """
+        The goal of our z-score function is to predict the activation states of the TF's. We observe how a TF relates
+        to each of its targets to make our prediction. We compare each targets' observed gene regulation (either up or
+        down) and each TF-target interaction (whether it is activating or inhibiting) to conclude whether a TF is
+        activating or inhibiting. A positive value indicates activating while a negative value indicates inhibiting.
+        A value of zero means that we did not have enough information about the target or TF-target interaction to
+        make the prediction.
+
+        This calculation does NOT take into account network bias.
+
+        Args:
+            DG: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes.
+                ** DG must have 'updown' and 'sign' attributes **
+
+        Returns: A number between 0 and 1 that is the graph's bias
+
+    """
+
     # calculate bias for up downs
     data = list(zip(*DG.nodes(data=True))[1])
     ups = [dict_list['updown'] for dict_list in data if dict_list['updown'] > 0]
@@ -182,10 +221,28 @@ def calculate_bias(DG):
 
     return u_data * u_TR
 
-# ---------------------------------------------------------------
-# SBR: I might suggest consolidating bias_corrected and not_bias_corrected functions
-# ---------------------------------------------------------------
-def bias_corrected_tr_zscore(DG, DEG_list, bias):
+def bias_corrected_tf_zscore(DG, DEG_list, bias):
+
+    """
+        The goal of our z-score function is to predict the activation states of the TF's. We observe how a TF relates
+        to each of its targets to make our prediction. We compare each targets' observed gene regulation (either up or
+        down) and each TF-target interaction (whether it is activating or inhibiting) to conclude whether a TF is
+        activating or inhibiting. A positive value indicates activating while a negative value indicates inhibiting.
+        A value of zero means that we did not have enough information about the target or TF-target interaction to
+        make the prediction.
+
+        This calculation assumes background network bias, indicated by argument bias.
+
+        Args:
+            DG: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes
+                ** DG must have 'updown' and 'sign' attributes **
+            DEG_list: list of strings, your list of differentially expressed genes
+            bias: a number between 0 and 1 that is the background network's bias
+
+        Returns: A sorted Pandas Series that maps a transcription factor's gene symbol to its calculated z-score.
+
+    """
+
     source_nodes = list(set(zip(*DG.edges())[0]))  # identifying unique source nodes in graph
 
     TR_to_zscore = {}
@@ -242,6 +299,28 @@ def bias_corrected_tr_zscore(DG, DEG_list, bias):
 
 def rank_and_score_df(series, genes_to_rank, value_name = 'z-score', abs_value = True, act = False, remove_dups = False):
 
+    """
+        This function ranks an input set of genes (genes_to_rank) based on each gene's zscore relative to all calculated
+        z-scores(series). By default, this function assumes it is sorting by z-score, but this funciton can also be
+        used for pvalue. You can choose to sort by most activating (abs_value = False, act = True), most inhibiting
+        (abs_value = False, act = False), or highest absolute zscore (abs_value = True).
+
+        Args:
+            series: a Pandas Series that maps all TF's to their calculated z-scores (or p-values)
+            genes_to_rank: a list of strings, the genes symbols that you wish to know the rankings of
+            value_name: string, this will be the title of the third column of the output Dataframe (should match what
+                series maps to)
+            abs_value: Boolean, True to rank based on absolute z-score, False otherwise
+            act: Boolean, True to rank by most positive z-score, False to rank by most negative. Ignored if abs_value
+                is True.
+            remove_dups: Boolean, True to give genes with the same z-score the same rank, False to assign every gene a
+                different rank even if they have the same z-score.
+
+        Returns: A sorted Pandas Dataframe displaying each gene symbol alongside its rank and z-score
+
+    """
+
+    genes_to_rank = list(set(genes_to_rank)) # cannot have any duplicates
     scores = series.loc[genes_to_rank]
     ranks, num_ranks = rank(series, genes_to_rank, abs_value, act, remove_dups)
 
@@ -255,6 +334,21 @@ def rank_and_score_df(series, genes_to_rank, value_name = 'z-score', abs_value =
 
 
 def top_values(series, act = True, abs_value = False, top = 10):
+
+    """
+        This function returns a sorted Pandas Series of the top (number indicated by top) genes based off z-score
+        (given by series).
+
+        Args:
+            series: a Pandas Series that maps all TF's to their calculated z-scores (or p-values)
+            act: Boolean, True to sort by most positive z-score, False to sort by most negative. Ignored if abs_value
+                is True
+            abs_value: Boolean, True to sort by absolute z-score, False otherwise
+            top: the number of genes you wish to have returned
+
+        Returns: A sorted Pandas Dataframe of the top genes, mapping each gene to its z-score
+
+    """
 
     # top activating and inhibiting, sort by strongest zscore or log(pvalue)
     if abs_value == True:
@@ -273,6 +367,25 @@ def top_values(series, act = True, abs_value = False, top = 10):
 
 
 def rank(series, genes_to_rank, abs_value=False, act=True, remove_dups = False):
+
+    """
+        This function ranks an input set of genes (genes_to_rank) based on each gene's z-score relative to all calculated
+        z-scores(series). By default, this function assumes it is sorting by z-score, but this funciton can also be
+        used for pvalue. You can choose to sort by most activating (abs_value = False, act = True), most inhibiting
+        (abs_value = False, act = False), or highest absolute zscore (abs_value = True).
+
+        Args:
+            series: a Pandas Series that maps all TF's to their calculated z-scores (or p-values)
+            genes_to_rank: a list of strings, the genes symbols that you wish to know the rankings of
+            abs_value: Boolean, True to rank based on absolute z-score, False otherwise
+            act: Boolean, True to rank by most positive z-score, False to rank by most negative. Ignored if abs_value
+                is True.
+            remove_dups: Boolean, True to give genes with the same z-score the same rank, False to assign every gene a
+                different rank even if they have the same z-score.
+
+        Returns: A sorted Pandas Series mapping each gene symbol to its rank
+
+    """
 
     # genes with the same p_value/zscore will be given different ranks depending on the order they are stored in
     if remove_dups == False:

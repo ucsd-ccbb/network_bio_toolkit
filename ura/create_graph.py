@@ -52,7 +52,7 @@ def load_jaspar(filename = 'jaspar_genereg_matrix.txt'):
         "database" file and download "MATRIX.txt".
 
         Args:
-            filename = string, the path to the jaspar "MATRIX.txt" file
+            filename: string, the path to the jaspar "MATRIX.txt" file
 
         Returns: A list of all unique transcription factors from the file provided
 
@@ -82,11 +82,11 @@ def create_TF_list(slowkow_bool=True,
         "database" file and download "MATRIX.txt".
 
         Args:
-            slowkow_bool = boolean, whether or not to include the slowkow databases
-            slowkow_files = list or strings, a list of input file path names to the load_slowkow method
-            slowkow_sep = string, the type of deliminator used in the slowkow_files to separate the transcription factors
-            jaspar_bool = boolean, whether or not to include the jaspar database
-            jaspar_file = string, the file path where to find the jaspar database
+            slowkow_bool: boolean, whether or not to include the slowkow databases
+            slowkow_files: list or strings, a list of input file path names to the load_slowkow method
+            slowkow_sep: string, the type of deliminator used in the slowkow_files to separate the transcription factors
+            jaspar_bool: boolean, whether or not to include the jaspar database
+            jaspar_file: string, the file path where to find the jaspar database
 
         Returns: A list of all unique transcription factors from the files provided
 
@@ -104,8 +104,24 @@ def create_TF_list(slowkow_bool=True,
 
     return list(set(TF_list))
 
-# Loss of 110/about 40000 edges do to removal of multiedges
-def load_small_STRING_to_digraph(filename="../STRING_network.xlsx"):
+
+def load_small_STRING_to_digraph(filename="../STRING_network.xlsx", TF_list = []):
+
+    """
+        This function loads a small subset of the STRING database into a networkx digraph that can be used as input
+        into the rest of our functions. This function can also filter the input database so that only the genes
+        indicated by TF_list, and all of their out-going neighbors, will remain in the graph. Namely, the only
+        source nodes left in the graph will be the genes in TF_list.
+
+        ** Note that there is a loss of 110 our of about 40000 edges due to removal of multiedges **
+
+        Args:
+            filename: string, the path to the string file
+            TF_list: the list of genes to filter the graph by
+
+        Returns: A Networkx DiGraph representation, using all-caps gene symbol, of the input STRING file
+
+    """
 
     # Load STRING database as background network
     STRING_DF = pd.read_excel(filename)
@@ -123,10 +139,30 @@ def load_small_STRING_to_digraph(filename="../STRING_network.xlsx"):
     STRING_DF['weight'] = map(lambda x: float(x), STRING_DF['weight'])
     G_str = nx.from_pandas_dataframe(STRING_DF, 'source', 'target', ['sign', 'weight'], create_using=nx.DiGraph())
 
+    # if a filter list is specified
+    if TF_list != []:
+        G_str = filter_digraph(G_str, TF_list)
+
     return G_str
 
 
-def load_STRING_to_digraph(filename = "9606.protein.actions.v10.5.txt",confidence_filter=400):
+def load_STRING_to_digraph(filename = "9606.protein.actions.v10.5.txt", confidence_filter=400, TF_list = []):
+
+    """
+        This function loads a subset of the STRING database from the file "9606.protein.actions.v10.5.txt"
+        into a networkx digraph that can be used as input into the rest of our functions. This function can
+        also filter the input database so that only the genes indicated by TF_list, and all of their out-going
+        neighbors, will remain in the graph. Namely, the only source nodes left in the graph will be the genes in TF_list.
+
+        Args:
+            filename: string, the path to the string file
+            confidence_filter: A number between 0 and 1000, all interactions with confidece less than this number
+                will be filtered out
+            TF_list: the list of genes to filter the graph by
+
+        Returns: A Networkx graph representation, using all-caps gene symbol, of the STRING database file
+
+    """
 
     # read STRING file to dataframe
     df_full = pd.read_csv(filename, sep="\t")
@@ -181,10 +217,26 @@ def load_STRING_to_digraph(filename = "9606.protein.actions.v10.5.txt",confidenc
     G_str = nx.relabel_nodes(G_str, ensembl_to_symbol)  # only keep the proteins that
     G_str.remove_node('None')
 
+    # if a filter list is specified
+    if TF_list != []:
+        G_str = filter_digraph(G_str, TF_list)
+
     return G_str
 
 
 def filter_digraph(G,TF_list):
+
+    """
+        This is a helper function that removes all source nodes from graph G that are not in TF_list. The original
+        graph is not modified.
+
+        Args:
+            G: The NetworkX graph to filter
+            TF_list: the source nodes to keep
+
+        Returns: A Networkx graph representation of the STRING database file
+
+    """
 
     if ((str(type(G)) == '<class \'networkx.classes.multidigraph.MultiDiGraph\'>') | (
                 str(type(G)) == '<class \'networkx.classes.multigraph.MultiGraph\'>')):
@@ -199,26 +251,27 @@ def filter_digraph(G,TF_list):
     return DG
 
 
-# -------- SBR: some notes------------
-# column names are too specific ('lfdr.89.12')
-# can probably improve efficiency of this loop.  Something like:
-# DEG_db.index=DEG_db['symbol']
-# DEG_to_updown = DEG_db[DEG_db['lfdr.89.12']<filter_value]['log2.89.12'].dropna()
-# -------------------------------
-
-# ----------
-# SBR: this function is too specific.  We should try to think of a function which accepts an input with standardized columns,
-# and require that the user supplies this.
-# ----------
-
-# MJW consolidated DEG loading functions, now has standard input
-
 def create_DEG_list(filename, p_value_filter = 0.05):
+
+    """
+        This function takes a standard input file representation of a list of differentially expressed genes and
+        loads it into multiple dictionaries that can be used by our functions. Our standard input file must be
+        a tab separated list, where each row represents a gene. This file must contain column headers "adj_p_value"
+        (adjusted p-value), "gene_symbol", and "fold_change" (the fold change or log fold change).
+
+        Args:
+            filename: the standard input file
+            p_value_filter: typically a number between 0 and 1, the number to filter the adjusted p-vlaue by
+
+        Returns:
+            DEG_list: list of gene symbols as strings
+            DEG_to_pvalue: dictionary mapping DEG gene symbol to adjusted p-value
+            DEG_to_updown: dictionary mapping DEG gene symbol to (log) fold change
+
+    """
 
     df = pd.DataFrame.from_csv(filename, sep='\t')
     df = df.loc[df['adj_p_value'] < p_value_filter]
-    # ----- SBR: should check that file is sorted first, before dropping duplicates ---------
-    # MJW Yes, it does that already when it filters
     df.drop_duplicates(subset=['gene_symbol'], keep='first', inplace=True)
     DEG_list = df['gene_symbol']
     DEG_to_pvalue = dict(zip(df['gene_symbol'], df['adj_p_value']))
@@ -230,18 +283,13 @@ def create_DEG_list(filename, p_value_filter = 0.05):
 def add_updown_from_DEG(G, DEG_to_updown):
 
     """
-        This function loads up a list of differentially expressed genes, removes genes with lfdr value greater
-        than the specified filter value, then extracts the up/down regulation information associated with those genes.
-        Our function then finds all DEG's located withing graph DG, and adds these up/down regulation values as a node
-        attribute.
+        This function adds "updown" node attribute to nodes specified by DEG_to_updown
 
         Args:
-            DG = DiGraph, a networkX directed graph
-            DEG_filename = string, path to our list of differentially expressed genes, containing up/down regulated information
-                       under column log2.89.12
-            DEG_filter_value = float, cutoff lfdr value to filter our DEG's by
+            G: DiGraph, a networkX directed graph
+            DEG_to_updown: a dictionary that maps gene symbol to up/down regulation information (output of create_DEG_list)
 
-        Returns: DEG_list = list, a list of differentially expressed genes that have a lfdr value less than the filter value
+        Returns: A networkX graph, a copy of the input graph with added node attribute "updown" to applicable genes
     """
 
     # don't want to add updowns to original graph
