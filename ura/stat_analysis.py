@@ -9,9 +9,15 @@ import scipy
 from scipy import stats
 import math
 import pandas as pd
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
+
+import visJS2jupyter.visJS_module as visJS_module # "pip install visJS2jupyter"
+import create_graph # from URA package
 
 
-def tr_pvalues(DG_TF, DG_universe, DEG_list):
+def tf_pvalues(DG_TF, DG_universe, DEG_list):
 
     """
         Our p-value function calculates the log of the p-value for every TF in the graph using [scipy.stats.hypergeom.logsf]
@@ -60,9 +66,7 @@ def tr_pvalues(DG_TF, DG_universe, DEG_list):
 
     return TR_to_pvalue
 
-
-# MJW to force use of unbiased calculation, set bias filter to 1
-# MJW to force use of biased calculation, set bias filter to -1
+	
 def tf_zscore(DG, DEG_list, bias_filter = 0.25):
     """
         The goal of our z-score function is to predict the activation states of the TF's. We observe how a TF relates
@@ -433,3 +437,118 @@ def rank(series, genes_to_rank, abs_value=False, act=True, remove_dups = False):
         num_ranks = str(len(index))
 
         return return_series, num_ranks
+		
+		
+		
+def vis_tf_network(DG, tf, DEG_filename, DEG_list,
+                   directed_edges = False,
+                   node_spacing = 2200,
+				   graph_id = 0
+                   ):
+				   
+    """
+        This fuction visualizes the network consisting of one transcription factor and its downstream regulated genes. The regulator's 
+		node is yellow, while all regulated genes are various shades of blue or red. The shade of blue or red is calculated based on 
+		the fold change of each gene given in the file DEG_filename (which must be of the srndard format indicated by the function 
+		create_DEG_list). Red is up-regulated. Blue is down-regulated. White nodes did not have enough information. Darker red/blue 
+		indicates a stronger (larger absolute value) fold change value. Node size is deterined by adjusted p-value, also from DEG_filename. 
+		Larger nodes have a more significant p-value. Nodes from DEG_list will have a black border. Activating edges are red. Inhibiting 
+		edges are blue. 
+		
+		The package visJS2jupyter is required for this function. Type "pip install visJS2jupyter" into your command prompt if you do not already
+		have this package.
+		
+		DEG_filename: Our standard input file must be a tab separated list, where each row represents a gene. This file must contain column headers
+		"adj_p_value" (adjusted p-value), "gene_symbol", and "fold_change" (the fold change or log fold change).
+
+        Args:
+            DG: A networkx graph, your (potentially TF-filtered) background networkx
+			tf: string, all caps gene symbol of the regulator whose sub-network you wish to visualizes
+			DEG_filename: string, the path of where to find your standard input DEG file
+			DEG_list: list of DEG's as strings, output of create_graph.creat_DEG_list
+			directed_edges: bool, True to include directional arrows on edges, False otherwise
+			node_spacing: int, increase this number if your nodes are too close together (for a graph with many nodes)
+			    or decrease if they are too far apart (for a graph with fewer nodes)
+			graph_id: change this number to display multiple graphs in one notebook
+
+        Returns: HTML output that will display an interactive network in a jupyter notebooks cell.
+
+    """
+    
+    #------------ GRAPH --------------#
+
+    # create sub graph
+    node_list = DG.neighbors(tf) + [tf]
+    G = DG.subgraph(node_list) #get only top z-score node and neighbors
+    
+    # remove arrows pointing to tf
+    if directed_edges == True:
+        tf_in_edges = G.in_edges(tf)
+        G.remove_edges_from(tf_in_edges)
+    
+    # define nodes and edges
+    nodes = list(G.nodes())
+    edges = list(G.edges()) 
+    
+    #------------ NODES --------------#
+
+    # define the initial positions of the nodes using networkx's spring_layout function
+    pos = nx.spring_layout(G)
+    
+    # define node colors
+    DEGs, DEG_to_pvalue, DEG_to_updown = create_graph.create_DEG_list(DEG_filename, p_value_filter = 1) # get info for all nodes
+    node_to_fld = {n: DEG_to_updown[n] for n in nodes if n in DEG_to_updown} # keep only those in graph G
+    nx.set_node_attributes(G, 'fold_change', 0) # give all nodes a default fold change of zero
+    nx.set_node_attributes(G, 'fold_change', node_to_fld) # overwrite with actual fold change for the nodes that have one
+    node_to_color = visJS_module.return_node_to_color(G, field_to_map='fold_change', cmap=plt.cm.bwr)
+    node_to_color[tf] = 'yellow' # making the regulator extra visible
+    
+    # define node size
+    nts = {n: (2+(-np.log(DEG_to_pvalue[n]))) for n in nodes if n in DEG_to_updown} # keep only those in graph G
+    avg = np.average(list(nts.values()))
+    max_size = np.max(list(nts.values()))
+    node_to_size = {n:nts[n] if n in nts else avg for n in nodes}
+    node_to_size[tf] = max_size
+    
+    # give DEG nodes an outline
+    node_to_border_width = {n:2 if n in list(DEG_list) else 0 for n in nodes}
+    node_to_border_width[tf] = 0
+    nx.set_node_attributes(G, name = 'nodeOutline', values = node_to_border_width) # give all nodes a default fold change of zero
+    
+    # define node attributes
+    nodes_dict = [{"id":n,
+                   "color": node_to_color[n],
+                   "border_width": node_to_border_width[n],
+                   "size_field": node_to_size[n],
+                   "x":pos[n][0]*node_spacing,
+                   "y":pos[n][1]*node_spacing} for n in nodes]
+    node_map = dict(zip(nodes,range(len(nodes))))  # map to indices for source/target in edges
+    
+    #------------ EDGES --------------#
+    
+    # define edge colors
+    color = {-1:'blue', 1:'red', 0: 'grey'} # red = act/up, blue = inh/down, no info = grey
+    edge_to_color = {edge[0:2]:color[np.sign(edge[2]['sign'])] for edge in list(G.edges(data = True))}
+
+    # define edge attributes
+    edges_dict = [{"source":node_map[edges[i][0]], 
+                   "target":node_map[edges[i][1]], 
+                   "color":edge_to_color[edges[i]]} for i in range(len(edges))]
+
+    # display results
+    return visJS_module.visjs_network(nodes_dict,edges_dict,
+                                            edge_arrow_to = directed_edges,
+                                            node_size_multiplier = 10,
+                                            node_size_transform = '',
+                                            node_size_field = 'size_field',
+                                            node_font_size = 35,
+                                            node_border_width = 5,
+                                            node_font_color = 'black',
+                                            edge_color_hover = 'orange',
+                                            edge_color_highlight = 'orange',
+                                            edge_width = 1.5,
+                                            edge_hoverWidth = 5,
+                                            edge_selection_width = 5,
+                                            node_border_width_selected = 0,
+                                            graph_id = graph_id)
+    
