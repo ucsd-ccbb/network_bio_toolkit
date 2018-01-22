@@ -28,8 +28,8 @@ def tf_pvalues(DG_TF, DG_universe, DEG_list):
         Note that if a TF is given a value of zero, that means none of the TF's targets were DEG's.
 
         Args:
-            DG_TF: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes
-            DG_universe: a networkx graph containing all interactions in our universe
+            DG_TF: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes (filtered)
+            DG_universe: a networkx graph containing all interactions in our universe (not filtered)
             DEG_list: list of strings, your list of differentially expressed genes
 
         Returns: A sorted Pandas Series that maps a transcription factor's gene symbol to its calculated p-vlaue log.
@@ -37,8 +37,7 @@ def tf_pvalues(DG_TF, DG_universe, DEG_list):
     """
 
     source_nodes = list(set(zip(*DG_TF.edges())[0]))  # identifying unique source nodes in graph
-    DG_universe_edges = list(DG_universe.edges())
-    background_list = list(set(zip(*DG_universe_edges)[0]) | set(zip(*DG_universe_edges)[1]))
+    background_list = list(DG_universe.nodes()) # list of all unique nodes in universe
 
     TR_to_pvalue = {}
     x_n_to_p_score = {}
@@ -137,7 +136,11 @@ def not_bias_corrected_tf_zscore(DG, DEG_list):
             if ((str(type(DG)) == '<class \'networkx.classes.multidigraph.MultiDiGraph\'>') | (str(type(DG)) == '<class \'networkx.classes.multigraph.MultiGraph\'>')):
                 for i in range(len(DG[TR][n])): # have to take into account multiple edges with the same mapping
                     sign_of_edge = DG[TR][n][i]['sign']
-                    up_down_of_n = (DG.node[n]['updown'] / abs(DG.node[n]['updown']))
+					
+                    if float(DG.node[n]['updown']) != 0:
+                        up_down_of_n = (DG.node[n]['updown'] / float(abs(DG.node[n]['updown'])))
+                    else:
+                        print "Edge (" + str(TR) + ',' + str(n) + ') has updown of zero'
 
                     # predict whether this neighbor thinks the TR is Act. or Inhib.
                     if ((sign_of_edge * up_down_of_n) == 1):

@@ -119,7 +119,8 @@ def load_small_STRING_to_digraph(filename="../STRING_network.xlsx", TF_list = []
             filename: string, the path to the string file
             TF_list: the list of genes to filter the graph by
 
-        Returns: A Networkx DiGraph representation, using all-caps gene symbol, of the input STRING file
+        Returns: DG_universe: A Networkx DiGraph representation, using all-caps gene symbol, of the input STRING file
+				 DG_TF:  A Networkx DiGraph representation of the input STRING file, filtered down to the sub-network of TF's and targets
 
     """
 
@@ -137,13 +138,12 @@ def load_small_STRING_to_digraph(filename="../STRING_network.xlsx", TF_list = []
 
     # make digraph
     STRING_DF['weight'] = map(lambda x: float(x), STRING_DF['weight'])
-    G_str = nx.from_pandas_dataframe(STRING_DF, 'source', 'target', ['sign', 'weight'], create_using=nx.DiGraph())
+    DG_universe = nx.from_pandas_dataframe(STRING_DF, 'source', 'target', ['sign', 'weight'], create_using=nx.DiGraph())
 
-    # if a filter list is specified
-    if TF_list != []:
-        G_str = filter_digraph(G_str, TF_list)
+    # filtered graph
+    DG_TF = filter_digraph(DG_universe, TF_list)
 
-    return G_str
+    return DG_TF, DG_universe
 
 
 def load_STRING_to_digraph(filename = "9606.protein.actions.v10.5.txt", confidence_filter=400, TF_list = []):
@@ -160,7 +160,8 @@ def load_STRING_to_digraph(filename = "9606.protein.actions.v10.5.txt", confiden
                 will be filtered out
             TF_list: the list of genes to filter the graph by
 
-        Returns: A Networkx graph representation, using all-caps gene symbol, of the STRING database file
+        Returns: DG_universe: A Networkx DiGraph representation, using all-caps gene symbol, of the input STRING file
+				 DG_TF:  A Networkx DiGraph representation of the input STRING file, filtered down to the sub-network of TF's and targets
 
     """
 
@@ -214,14 +215,13 @@ def load_STRING_to_digraph(filename = "9606.protein.actions.v10.5.txt", confiden
     ensembl_to_symbol = dict(zip(ensembl_list, symbol_list))
 
     # relabel nodes with symbols
-    G_str = nx.relabel_nodes(G_str, ensembl_to_symbol)  # only keep the proteins that
-    G_str.remove_node('None')
+    DG_universe = nx.relabel_nodes(G_str, ensembl_to_symbol)  # only keep the proteins that
+    DG_universe.remove_node('None')
 
-    # if a filter list is specified
-    if TF_list != []:
-        G_str = filter_digraph(G_str, TF_list)
+    # filtered graph
+    DG_TF = filter_digraph(DG_universe, TF_list)
 
-    return G_str
+    return DG_TF, DG_universe
 
 
 def filter_digraph(G,TF_list):
