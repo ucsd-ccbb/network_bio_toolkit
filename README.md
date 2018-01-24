@@ -52,9 +52,9 @@ This package includes functions to help you determine potential upstream regulat
 
 These are available under the "notebooks" folder
 
-1) **URA Basic Example**: This notebook provides details on how to use our URA package for your own 
-2) **URA HUVEC BRCA**: This notebook doubles as a validaiton notebook and a real-world use case example. We compare the results of our URA package to the results from the Ingenuity Upstream Regulator Analysis's accompanying paper: [Causal analysis approaches in Ingenuity Pathway Analysis](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3928520/).
-3) **URA Arthritis**: This notebook is a case study done on a data set produced by the UCSD CCBB. It focuses on the flow of the funcitons in the URA package, with empahsis on the order you should call each function.
+1) **URA_Basic_Example**: This notebook provides details on how to use our URA package for your own 
+2) **URA_huvec_brca**: This notebook doubles as a validaiton notebook and a real-world use case example. We compare the results of our URA package to the results from the Ingenuity Upstream Regulator Analysis's accompanying paper: [Causal analysis approaches in Ingenuity Pathway Analysis](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3928520/).
+3) **URA_Arthritis**: This notebook is a case study done on a data set produced by the UCSD CCBB. It focuses on the flow of the funcitons in the URA package, with empahsis on the order you should call each function.
 
 
 ## Authors
