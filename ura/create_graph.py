@@ -251,7 +251,7 @@ def filter_digraph(G,TF_list):
     return DG
 
 
-def create_DEG_list(filename, p_value_filter = 0.05):
+def create_DEG_list(filename, p_value_filter = 0.05, fold_change_filter = None):
 
     """
         This function takes a standard input file representation of a list of differentially expressed genes and
@@ -261,7 +261,8 @@ def create_DEG_list(filename, p_value_filter = 0.05):
 
         Args:
             filename: the standard input file
-            p_value_filter: typically a number between 0 and 1, the number to filter the adjusted p-vlaue by
+            p_value_filter: typically a number between 0 and 1, the number to filter the adjusted p-vlaue by. Will remove all above this threshold
+			fold_change_filter: Will remove all below this threshold
 
         Returns:
             DEG_list: list of gene symbols as strings
@@ -271,8 +272,17 @@ def create_DEG_list(filename, p_value_filter = 0.05):
     """
 
     df = pd.DataFrame.from_csv(filename, sep='\t')
-    df = df.loc[df['adj_p_value'] < p_value_filter]
+	
+	# remove duplicate lines for same gene symbol, just use first occurance
     df.drop_duplicates(subset=['gene_symbol'], keep='first', inplace=True)
+
+	# filter by p-value cut-off
+    df = df.loc[df['adj_p_value'] < p_value_filter]
+	
+	# filter by (log) fold change cut off if applicable
+    if fold_change_filter != None:
+        df = df.loc[abs(df['fold_change']) > fold_change_filter]
+	
     DEG_list = df['gene_symbol']
     DEG_to_pvalue = dict(zip(df['gene_symbol'], df['adj_p_value']))
     DEG_to_updown = dict(zip(df['gene_symbol'], df['fold_change']))

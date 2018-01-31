@@ -340,7 +340,7 @@ def rank_and_score_df(series, genes_to_rank, value_name = 'z-score', abs_value =
 
 
 
-def top_values(series, act = True, abs_value = False, top = 10):
+def top_values(series, TF_to_adjp, TF_to_foldchange, act = True, abs_value = False, top = 10):
 
     """
         This function returns a sorted Pandas Series of the top (number indicated by top) genes based off z-score
@@ -540,6 +540,8 @@ def vis_tf_network(DG, tf, DEG_filename, DEG_list,
 
     # display results
     return visJS_module.visjs_network(nodes_dict,edges_dict,
+											node_color_highlight_border = 'black',
+											node_color_hover_border = 'black',
                                             edge_arrow_to = directed_edges,
                                             node_size_multiplier = 10,
                                             node_size_transform = '',
