@@ -17,6 +17,7 @@ import visJS2jupyter.visJS_module as visJS_module # "pip install visJS2jupyter"
 import create_graph # from URA package
 
 
+
 def tf_pvalues(DG_TF, DG_universe, DEG_list):
 
     """
@@ -64,6 +65,24 @@ def tf_pvalues(DG_TF, DG_universe, DEG_list):
         TR_to_pvalue = pd.Series(TR_to_pvalue).sort_values(ascending=False)
 
     return TR_to_pvalue
+
+
+
+def tf_target_enrichment(DG_TF, DG_universe, DEG_list):
+    return tf_pvalues(DG_TF, DG_universe, DEG_list)
+
+
+def tf_enrichment(TF_list, DEG_full_graph, DEG_list):
+
+    # make a graph that will manipulate our p-value function to calculate one TF-enrichment p-value
+    dummy = 'TF_ENRICHMENT'
+    dummy_list = [dummy] * len(TF_list)
+    edges = zip(dummy_list, TF_list)
+    G = nx.DiGraph(edges)
+
+    return tf_pvalues(G, DEG_full_graph, DEG_list)
+
+
 
 	
 def tf_zscore(DG, DEG_list, bias_filter = 0.25):
