@@ -6,7 +6,9 @@ Date: 2/5/18
 """
 
 import create_graph
+reload(create_graph)
 import stat_analysis
+reload(stat_analysis)
 import matplotlib.pyplot as plt
 import copy
 
@@ -14,12 +16,14 @@ class Upstream:
 
     def __init__(self, gene_type = 'symbol'):
 
+        # User has to provide a gene type
         if (gene_type != 'entrez') & (gene_type != 'symbol'):
             raise ValueError('Please specify either \"entrez\" or \"symbol\" as your initialization argument.\n')
 
+        # instantiate all of our instance variables
         self.gene_type = gene_type
 
-        # create_graph
+        # create_graph variables
         self.TF_list = None
         self.DG_universe = None
         self.DG_TF = None
@@ -29,19 +33,84 @@ class Upstream:
         self.DEG_to_updown = None # (log) fold change of all genes
         self.DEG_full_graph = None
 
-        # stat_analysis
+        # stat_analysis variables
         self.tf_target_enrichment = None
         self.tf_enrichment = None
         self.z_scores = None
 
+        # map string to actual instance variable
+        self.string_to_item = {}
+        self.string_to_item['gene_type'] = self.gene_type
+        self.string_to_item['TF_list'] = self.TF_list
+        self.string_to_item['DG_universe'] = self.DG_universe
+        self.string_to_item['DG_TF'] = self.DG_TF
+        self.string_to_item['DEG_list'] = self.DEG_list
+        self.string_to_item['DEG_filename'] = self.DEG_filename
+        self.string_to_item['DEG_to_pvalue'] = self.DEG_to_pvalue
+        self.string_to_item['DEG_to_updown'] = self.DEG_to_updown
+        self.string_to_item['DEG_full_graph'] = self.DEG_full_graph
+        self.string_to_item['tf_target_enrichment'] = self.tf_target_enrichment
+        self.string_to_item['tf_enrichment'] = self.tf_enrichment
+        self.string_to_item['z_scores'] = self.z_scores
+
+        # instanciating error message dict
+        self.item_to_message = {}
+        self.item_to_message['gene_type'] = 'No gene type currently on file. Please create a new instance of Upstream using '\
+                             + 'Upstream(gene_type)'
+        self.item_to_message['TF_list'] = 'No transcription factor list currently on file. Please run one of the following methods:\n' \
+                             + ' - Upstream.load_slowkow\n' \
+                             + ' - Upstream.load_jaspar\n' \
+                             + ' - Upstream.easy_load_TF_list\n' \
+                             + 'Or assign your own using self.TF_list\n'
+        self.item_to_message['DG_universe'] = 'No background network currently on file. Please run one of the following methods:\n' \
+                             + ' - Upstream.load_small_STRING_to_digraph\n' \
+                             + ' - Upstream.load_STRING_to_digraph\n' \
+                             + 'Or assign your own using self.DG_universe\n'
+        self.item_to_message['DG_TF'] = 'No transcription factor background network currently on file. Please run one of the following methods:\n' \
+                             + ' - Upstream.load_small_STRING_to_digraph\n' \
+                             + ' - Upstream.load_STRING_to_digraph\n' \
+                             + 'Or assign your own using self.DG_TF\n'
+        self.item_to_message['DEG_list'] = 'No differentially expressed gene list currently on file. Please run the following method:\n' \
+                             + ' - Upstream.create_DEG_list\n' \
+                             + 'Or assign your own using self.DEG_list\n'
+        self.item_to_message['DEG_filename'] = 'No differentially expressed gene filename currently on file. Please run the following method:\n' \
+                             + ' - Upstream.create_DEG_list\n' \
+                             + 'Or assign your own using self.DEG_filename\n'
+        self.item_to_message['DEG_to_pvalue'] = 'No DEG to (adj) p-value mapping currently on file. Please run the following method:\n' \
+                             + ' - Upstream.create_DEG_list\n' \
+                             + 'Or assign your own using self.DEG_to_pvalue\n'
+        self.item_to_message['DEG_to_updown'] = 'No DEG to up/down regulation mapping currently on file. Please run the following method:\n' \
+                             + ' - Upstream.create_DEG_list\n' \
+                             + 'Or assign your own using self.DEG_to_updown\n'
+        self.item_to_message['DEG_full_graph'] = 'No full expression gene graph currently on file. Please run the following method:\n' \
+                             + ' - Upstream.create_DEG_list\n' \
+                             + 'Or assign your own using self.DEG_full_graph\n'
+        self.item_to_message['tf_target_enrichment'] = 'No TF-target enrichment dictionary currently on file. Please run the following method:\n' \
+                             + ' - Upstream.tf_target_enrichment\n' \
+                             + 'Or assign your own using self.tf_target_enrichment\n'
+        self.item_to_message['tf_enrichment'] = 'No TF enrichment value currently on file. Please run the following method:\n' \
+                             + ' - Upstream.tf_enrichment\n' \
+                             + 'Or assign your own using self.tf_enrichment\n'
+        self.item_to_message['z_scores'] = 'No z-score dictionary currently on file. Please run the following method:\n' \
+                             + ' - Upstream.tf_zscore\n' \
+                             + 'Or assign your own using self.z_score\n'
+        
+
     def __repr__(self):
-        return self.create_to_string(self)
+        return self.create_to_string()
 
     def __str__(self):
-        return self.create_to_string(self)
+        return self.create_to_string()
 
     def create_to_string(self):
-        return "TODO: create_to_string()"
+        for item in ['gene_type', 'TF_list', 'DG_universe', 'DG_TF', 'DEG_list', 'DEG_filename',
+                     'DEG_to_pvalue', 'DEG_to_updown', 'DEG_full_graph', 'tf_target_enrichment',
+                     'tf_enrichment', 'z_scores']:
+            print item + ': '
+            exists = self.check_exists(item)
+            if exists == True:
+                print str(type(self.string_to_item[item])) + '\n'
+        return '\n'
 
 
     # ----------------------------- GETTERS AND SETTERS -------------------------- #
@@ -50,39 +119,13 @@ class Upstream:
     # to ask to see a variable
     def get(self, item):
 
-        # map string to actual instance variable
-        string_to_item = {}
-        string_to_item['gene_type'] = self.gene_type
-        string_to_item['TF_list'] = self.TF_list
-        string_to_item['DG_universe'] = self.DG_universe
-        string_to_item['DG_TF'] = self.DG_TF
-        string_to_item['DEG_list'] = self.DEG_list
-        string_to_item['DEG_filename'] = self.DEG_filename
-        string_to_item['DEG_to_pvalue'] = self.DEG_to_pvalue
-        string_to_item['DEG_to_updown'] = self.DEG_to_updown
-        string_to_item['DEG_full_graph'] = self.DEG_full_graph
-        string_to_item['tf_target_enrichment'] = self.tf_target_enrichment
-        string_to_item['tf_enrichment'] = self.tf_enrichment
-        string_to_item['z_scores'] = self.z_scores
+        # check that the argument is valid, and update our dictionary
+        exists = self.check_exists(item)
+        if exists == False:
+            return None
 
         # check if the user input is valid
-        try:
-            to_return = string_to_item[item]
-        except:
-            print 'The item you specified is not valid. Please specify one of the following variablesas a string:\n' \
-                  + 'gene_type\n' \
-                  + 'TF_list\n' \
-                  + 'DG_universe\n' \
-                  + 'DG_TF\n' \
-                  + 'DEG_list\n' \
-                  + 'DEG_filename\n' \
-                  + 'DEG_to_pvalue\n' \
-                  + 'DEG_to_updown\n' \
-                  + 'DEG_full_graph\n' \
-                  + 'tf_target_enrichment\n' \
-                  + 'tf_enrichment\n' \
-                  + 'z_scores\n\n'
-            return None
+        to_return = self.string_to_item[item]
 
         # check if the type of that variable is a "primitive" type
         return_deep_copy = True
@@ -101,6 +144,8 @@ class Upstream:
 
     # to set the value of a variable
     def set(self, item, value):
+
+        self.check_exists(item)
 
         # check if the type of that variable is a "primitive" type
         return_deep_copy = True
@@ -128,7 +173,7 @@ class Upstream:
         elif item == 'tf_enrichment': self.tf_enrichment = value
         elif item == 'z_scores': self.z_scores = value
         else:
-            print 'The item you specified is not valid. Please specify one of the following variables:\n' \
+            print 'The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
                   + 'gene_type\n' \
                   + 'TF_list\n' \
                   + 'DG_universe\n' \
@@ -177,14 +222,25 @@ class Upstream:
     # ------------------------- BACKGROUND NETWORK ------------------------------------ #
 
 
-    def load_small_STRING_to_digraph(self, filename, TF_list=[]):
-        DG_TF, DG_universe = create_graph.load_small_STRING_to_digraph(filename, TF_list)
+    def load_small_STRING_to_digraph(self, filename):
+
+        # make sure user has run all prerequisites
+        if self.check_exists('TF_list') == False:
+            return
+
+        DG_TF, DG_universe = create_graph.load_small_STRING_to_digraph(filename, self.TF_list)
         self.DG_TF = DG_TF
         self.DG_universe = DG_universe
 
 
-    def load_STRING_to_digraph(self, filename, TF_list, confidence_filter=400):
-        DG_TF, DG_universe = create_graph.load_STRING_to_digraph(filename, TF_list, confidence_filter, self.gene_type)
+    def load_STRING_to_digraph(self, filename, confidence_filter=400):
+
+        # make sure user has run all prerequisites
+        for item in ['TF_list', 'gene_type']:
+            if self.check_exists(item) == False:
+                return
+
+        DG_TF, DG_universe = create_graph.load_STRING_to_digraph(filename, self.TF_list, confidence_filter, self.gene_type)
         self.DG_TF = DG_TF
         self.DG_universe = DG_universe
 
@@ -198,7 +254,6 @@ class Upstream:
 
                         p_value_filter=0.05,
                         p_value_or_adj='adj',  # filtering by p-value ('p') or adjusted p-value ('adj')
-
                         fold_change_filter=None,  # specify a number to filter by absolute (log) fold change
 
                         gene_column_header=None,
@@ -206,9 +261,9 @@ class Upstream:
                         fold_change_column_header=None):
 
         # make sure user has run all prerequisites
-        for item in [self.DG_TF]:
+        for item in ['DG_TF', 'gene_type']:
             if self.check_exists(item) == False:
-                return -1
+                return
 
         # create the DEG list with specified cut-offs
         DEG_list, DG_TF = create_graph.create_DEG_list(filename, self.DG_TF, p_value_filter, p_value_or_adj,
@@ -222,7 +277,7 @@ class Upstream:
         # create the full graph (call same function but just don't filter it)
         DEG_full_graph, DEG_to_pvalue, DEG_to_updown = create_graph.create_DEG_full_graph(filename,
                     p_value_or_adj=p_value_or_adj,
-                    gene_symbol = self.gene_symbol,
+                    gene_type = self.gene_type,
                     gene_column_header=gene_column_header,
                     p_value_column_header=p_value_column_header,
                     fold_change_column_header=fold_change_column_header
@@ -237,10 +292,10 @@ class Upstream:
 
 
 
-    def tf_target_enrichment(self):
+    def tf_target_enrichment_calc(self):
 
         # make sure user has run all prerequisites
-        for item in [self.DG_TF, self.DG_universe, self.DEG_list]:
+        for item in ['DG_TF', 'DG_universe', 'DEG_list']:
             if self.check_exists(item) == False:
                 return
 
@@ -248,10 +303,10 @@ class Upstream:
         self.tf_target_enrichment = tf_target_enrichment
 
 
-    def tf_enrichment(self):
+    def tf_enrichment_calc(self):
 
         # make sure user has run all prerequisites
-        for item in [self.TF_list, self.DG_full_graph, self.DEG_list]:
+        for item in ['TF_list', 'DEG_full_graph', 'DEG_list']:
             if self.check_exists(item) == False:
                 return
 
@@ -265,7 +320,7 @@ class Upstream:
     def tf_zscore(self, bias_filter=0.25):
 
         # make sure user has run all prerequisites
-        for item in [self.DG_TF, self.DEG_list]:
+        for item in ['DG_TF', 'DEG_list']:
             if self.check_exists(item) == False:
                 return
 
@@ -279,7 +334,7 @@ class Upstream:
     def top_values(self, act=True, abs_value=False, top=10):
 
         # make sure user has run all prerequisites
-        for item in [self.z_scores, self.DEG_to_pvalue, self.DEG_to_updown]:
+        for item in ['z_scores', 'DEG_to_pvalue', 'DEG_to_updown']:
             if self.check_exists(item) == False:
                 return -1
 
@@ -298,58 +353,50 @@ class Upstream:
                        ):
 
         # make sure user has run all prerequisites
-        for item in [self.DG_TF, self.DEG_filename, self.DEG_list]:
+        for item in ['DG_TF', 'DEG_filename', 'DEG_list']:
             if self.check_exists(item) == False:
                 return -1
 
-         return stat_analysis.vis_tf_network(self.DG_TF, tf, self.DEG_filename, self.DEG_list, directed_edges, node_spacing, color_non_DEGs, color_map, graph_id)
+        return stat_analysis.vis_tf_network(self.DG_TF, tf, self.DEG_filename, self.DEG_list, directed_edges, node_spacing, color_non_DEGs, color_map, graph_id)
 
     # ------------------- HELPER FUNCTIONS ------------------------------ #
 
 
+    # item must not be strign version
     def check_exists(self, item):
 
-        item_to_message = {}
+        # re-map it so it stays up to date
+        self.string_to_item['gene_type'] = self.gene_type
+        self.string_to_item['TF_list'] = self.TF_list
+        self.string_to_item['DG_universe'] = self.DG_universe
+        self.string_to_item['DG_TF'] = self.DG_TF
+        self.string_to_item['DEG_list'] = self.DEG_list
+        self.string_to_item['DEG_filename'] = self.DEG_filename
+        self.string_to_item['DEG_to_pvalue'] = self.DEG_to_pvalue
+        self.string_to_item['DEG_to_updown'] = self.DEG_to_updown
+        self.string_to_item['DEG_full_graph'] = self.DEG_full_graph
+        self.string_to_item['tf_target_enrichment'] = self.tf_target_enrichment
+        self.string_to_item['tf_enrichment'] = self.tf_enrichment
+        self.string_to_item['z_scores'] = self.z_scores
 
-        item_to_message[self.TF_list] = 'No transcription factor list currently on file. Please run one of the following methods:\n'\
-                                        + 'Upstream.load_slowkow\n'\
-                                        + 'Upstream.load_jaspar\n'\
-                                        + 'Upstream.easy_load_TF_list\n'\
-                                        + 'Or assign your own using self.TF_list\n'
-        item_to_message[self].DG_universe = 'No background network currently on file. Please run one of the following methods:\n'\
-                                        + 'Upstream.load_small_STRING_to_digraph\n'\
-                                        + 'Upstream.load_STRING_to_digraph\n'\
-                                        + 'Or assign your own using self.DG_universe\n'
-        item_to_message[self].DG_TF = 'No transcription factor background network currently on file. Please run one of the following methods:\n'\
-                                        + 'Upstream.load_small_STRING_to_digraph\n'\
-                                        + 'Upstream.load_STRING_to_digraph\n'\
-                                        + 'Or assign your own using self.DG_TF\n'
-        item_to_message[self].DEG_list = 'No differentially expressed gene list currently on file. Please run the following method:\n'\
-                                        + 'Upstream.create_DEG_list\n'\
-                                        + 'Or assign your own using self.DEG_list\n'
-        item_to_message[self].DEG_filename = 'No differentially expressed gene filename currently on file. Please run the following method:\n' \
-                                        + 'Upstream.create_DEG_list\n'\
-                                        + 'Or assign your own using self.DEG_filename\n'
-        item_to_message[self].DEG_to_pvalue = 'No DEG to (adj) p-value mapping currently on file. Please run the following method:\n'\
-                                        + 'Upstream.create_DEG_list\n'\
-                                        + 'Or assign your own using self.DEG_to_pvalue\n'
-        item_to_message[self].DEG_to_updown = 'No DEG to up/down regulation mapping currently on file. Please run the following method:\n'\
-                                        + 'Upstream.create_DEG_list\n'\
-                                        + 'Or assign your own using self.DEG_to_updown\n'
-        item_to_message[self].DEG_full_graph = 'No full expression gene graph currently on file. Please run the following method:\n'\
-                                        + 'Upstream.create_DEG_list\n'\
-                                        + 'Or assign your own using self.DEG_full_graph\n'
-        item_to_message[self].tf_target_enrichment = 'No TF-target enrichment dictionary currently on file. Please run the following method:\n'\
-                                        + 'Upstream.tf_target_enrichment\n'\
-                                        + 'Or assign your own using self.tf_target_enrichment\n'
-        item_to_message[self].tf_enrichment = 'No TF enrichment value currently on file. Please run the following method:\n'\
-                                        + 'Upstream.tf_enrichment\n'\
-                                        + 'Or assign your own using self.tf_enrichment\n'
-        item_to_message[self].z_scores = 'No z-score dictionary currently on file. Please run the following method:\n'\
-                                        + 'Upstream.tf_zscore\n'\
-                                        + 'Or assign your own using self.z_score\n'
-        if item == None:
-            print item_to_message[item]
+        try:
+            if (type(self.string_to_item[item]) == type(None)):
+                print self.item_to_message[item]
+                return False
+        except:
+            print 'The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
+                  + '- gene_type\n' \
+                  + '- TF_list\n' \
+                  + '- DG_universe\n' \
+                  + '- DG_TF\n' \
+                  + '- DEG_list\n' \
+                  + '- DEG_filename\n' \
+                  + '- DEG_to_pvalue\n' \
+                  + '- DEG_to_updown\n' \
+                  + '- DEG_full_graph\n' \
+                  + '- tf_target_enrichment\n' \
+                  + '- tf_enrichment\n' \
+                  + '- z_scores\n\n'
             return False
 
         return True

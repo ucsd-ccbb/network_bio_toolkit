@@ -274,8 +274,8 @@ def create_DEG_list(filename,
 
     if (gene_column_header == -1) | (p_value_column_header == -1) | (fold_change_column_header == -1):
         if G == None:
-            return None, None, None
-        return None, None
+            return None, None
+        return None, None, None
 
     # remove duplicate lines for same gene symbol, just use first occurance
     df.drop_duplicates(subset=[gene_column_header], keep='first', inplace=True)
