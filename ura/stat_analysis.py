@@ -6,16 +6,18 @@ Date: 10/13/17
 """
 
 import scipy
-from scipy import stats
 import math
 import pandas as pd
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.stats
 
 import visJS2jupyter.visJS_module as visJS_module # "pip install visJS2jupyter"
 import create_graph # from URA package
 
+
+# --------------------- P-VALUE FUNCTIONS ---------------------------#
 
 
 def tf_pvalues(DG_TF, DG_universe, DEG_list):
@@ -83,6 +85,8 @@ def tf_enrichment(TF_list, DEG_full_graph, DEG_list):
     return tf_pvalues(G, DEG_full_graph, DEG_list)
 
 
+
+# --------------------- Z-SCORE FUNCTIONS ---------------------------#
 
 	
 def tf_zscore(DG, DEG_list, bias_filter = 0.25):
@@ -323,6 +327,9 @@ def bias_corrected_tf_zscore(DG, DEG_list, bias):
     return pd.Series(TR_to_zscore)
 
 
+# --------------------- DISPLAY FUNCTIONS ---------------------------#
+
+
 def rank_and_score_df(series, genes_to_rank, value_name = 'z-score', abs_value = True, act = False, remove_dups = False):
 
     """
@@ -359,14 +366,14 @@ def rank_and_score_df(series, genes_to_rank, value_name = 'z-score', abs_value =
 
 
 
-def top_values(series, TF_to_adjp, TF_to_foldchange, act = True, abs_value = False, top = 10):
+def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_value = False, top = 10):
 
     """
         This function returns a sorted Pandas Series of the top (number indicated by top) genes based off z-score
-        (given by series).
+        (given by z_score_series).
 
         Args:
-            series: a Pandas Series that maps all TF's to their calculated z-scores (or p-values)
+            z_score_series: a Pandas Series that maps all TF's to their calculated z-scores (or p-values)
             act: Boolean, True to sort by most positive z-score, False to sort by most negative. Ignored if abs_value
                 is True
             abs_value: Boolean, True to sort by absolute z-score, False otherwise
@@ -378,21 +385,36 @@ def top_values(series, TF_to_adjp, TF_to_foldchange, act = True, abs_value = Fal
 
     # top activating and inhibiting, sort by strongest zscore or log(pvalue)
     if abs_value == True:
-        top_series_abs = series.abs().sort_values(ascending=False).head(top)
+        top_series_abs = z_score_series.abs().sort_values(ascending=False).head(top)
         top_genes = list(top_series_abs.index)
-        top_values = [series[gene] for gene in top_genes]
-        return pd.Series(top_values, index=top_genes)
+        top_values = [z_score_series[gene] for gene in top_genes]
+        z_score_series = pd.Series(top_values, index=top_genes, name ='z-score')
 
     # top activating
     if act == True:
-        return series.sort_values(ascending=False).head(top)
+        z_score_series.sort_values(ascending=False).head(top)
+        z_score_series.rename('z-score')
 
     # top inhibiting
     else:
-        return series.sort_values(ascending=True).head(top)
+        z_score_series.sort_values(ascending=True).head(top)
+        z_score_series.rename('z-score')
+
+    # list of our top genes
+    top_genes = list(z_score_series.index)
+
+    # get p-value series
+    TF_to_adjp = {gene:DEG_to_pvalue[gene] if gene in DEG_to_pvalue else None for gene in top_genes}
+    p_series = pd.Series(TF_to_adjp, index=top_genes, name = '(adj) p-value')
+
+    # get fld change series
+    TF_to_foldchange = {gene: DEG_to_updown[gene] if gene in DEG_to_updown else None for gene in top_genes}
+    fld_series = pd.Series(TF_to_foldchange, index=top_genes, name = '(log) fold change')
+
+    return pd.concat([z_score_series, p_series, fld_series], axis=1)
 
 
-def rank(series, genes_to_rank, abs_value=False, act=True, remove_dups = False):
+def rank(series, genes_to_rank, abs_value=False, act=True, remove_dups = False): # TODO: output histogram
 
     """
         This function ranks an input set of genes (genes_to_rank) based on each gene's z-score relative to all calculated
@@ -465,6 +487,8 @@ def rank(series, genes_to_rank, abs_value=False, act=True, remove_dups = False):
 def vis_tf_network(DG, tf, DEG_filename, DEG_list,
                    directed_edges = False,
                    node_spacing = 2200,
+                   color_non_DEGs = False,
+                   color_map = plt.cm.bwr,
 				   graph_id = 0
                    ):
 				   
@@ -518,30 +542,42 @@ def vis_tf_network(DG, tf, DEG_filename, DEG_list,
     pos = nx.spring_layout(G)
     
     # define node colors
-    DEGs, DEG_to_pvalue, DEG_to_updown = create_graph.create_DEG_list(DEG_filename, p_value_filter = 1) # get info for all nodes
+    DEGs, DEG_to_pvalue, DEG_to_updown = create_graph.create_DEG_list(DEG_filename, p_value_filter = 1) # get info for all
     node_to_fld = {n: DEG_to_updown[n] for n in nodes if n in DEG_to_updown} # keep only those in graph G
     nx.set_node_attributes(G, 'fold_change', 0) # give all nodes a default fold change of zero
     nx.set_node_attributes(G, 'fold_change', node_to_fld) # overwrite with actual fold change for the nodes that have one
-    node_to_color = visJS_module.return_node_to_color(G, field_to_map='fold_change', cmap=plt.cm.bwr)
-    node_to_color[tf] = 'yellow' # making the regulator extra visible
+    node_to_color = visJS_module.return_node_to_color(G, field_to_map='fold_change', cmap=color_map)
+
+    if color_non_DEGs == False: # if they don't want to see non-DEG's colors
+        grey_list = [x for x in nodes if x not in DEG_list]
+        for n in grey_list:
+            if n != tf:
+                node_to_color[n] = 'grey'
     
     # define node size
     nts = {n: (2+(-np.log(DEG_to_pvalue[n]))) for n in nodes if n in DEG_to_updown} # keep only those in graph G
     avg = np.average(list(nts.values()))
     max_size = np.max(list(nts.values()))
     node_to_size = {n:nts[n] if n in nts else avg for n in nodes}
-    node_to_size[tf] = max_size
+    node_to_size[tf] = max_size + 8
     
     # give DEG nodes an outline
     node_to_border_width = {n:2 if n in list(DEG_list) else 0 for n in nodes}
     node_to_border_width[tf] = 0
     nx.set_node_attributes(G, name = 'nodeOutline', values = node_to_border_width) # give all nodes a default fold change of zero
+
+    # define node shape
+    all_circles = ['circle']*len(nodes)
+    node_to_shape = dict(zip(nodes, all_circles))
+    node_to_shape[tf] = 'star'
+    nx.set_node_attributes(G, name='shape', values=node_to_shape)  # give all nodes a default fold change of zero
     
     # define node attributes
     nodes_dict = [{"id":n,
                    "color": node_to_color[n],
                    "border_width": node_to_border_width[n],
                    "size_field": node_to_size[n],
+                   "node_shape": node_to_shape[n],
                    "x":pos[n][0]*node_spacing,
                    "y":pos[n][1]*node_spacing} for n in nodes]
     node_map = dict(zip(nodes,range(len(nodes))))  # map to indices for source/target in edges

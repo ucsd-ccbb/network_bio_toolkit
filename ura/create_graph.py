@@ -299,17 +299,30 @@ def create_DEG_list(filename,
 
 
 
-def create_DEG_full_graph(filename):
+def create_DEG_full_graph(filename,
+                    p_value_or_adj='adj',  # filtering by p-value ('p') or adjusted p-value ('adj')
+                    gene_type='symbol',  # 'symbol' or 'entrez'
+                    gene_column_header=None,
+                    p_value_column_header=None,
+                    fold_change_column_header=None
+                    ):
 
-    DEG_full_list, DEG_to_pvalue, DEG_to_updown = create_DEG_list(filename, p_value_filter=1)
+    DEG_full_list, DEG_to_pvalue, DEG_to_updown = create_DEG_list(filename,
+                    p_value_filter=1,
+                    p_value_or_adj=p_value_or_adj,  # filtering by p-value ('p') or adjusted p-value ('adj')
+                    gene_type=gene_type,  # 'symbol' or 'entrez'
+                    gene_column_header=gene_column_header,
+                    p_value_column_header=p_value_column_header,
+                    fold_change_column_header=fold_change_column_header
+                    )
+
     DEG_full_graph = nx.DiGraph()
     DEG_full_graph.add_nodes_from(DEG_full_list)
     DEG_full_graph = add_node_attribute_from_dict(DEG_full_graph, DEG_to_pvalue, attribute='adj_p_value')
-    DEG_full_graph = add_node_attribute_from_dict(DEG_full_graph, DEG_to_updown, attribute = 'updown')
-
-    return DEG_full_graph
+    DEG_full_graph = add_node_attribute_from_dict(DEG_full_graph, DEG_to_updown, attribute='updown')
 
 
+    return DEG_full_graph, DEG_to_pvalue, DEG_to_updown
 
 
 # ------------------- HELPER FUNCTIONS ------------------------------ #
@@ -464,6 +477,8 @@ def check_p_value_header(df, p_value_column_header, p_value_or_adj):
         elif p_value_or_adj == 'p':
             common_p_value_headers = ['P.Value', 'pvalue', 'PVALUE', 'p-value', 'P-VALUE',
                                       'p.value', 'P.VALUE', 'pval', 'PVAL', 'p_val', 'P_VAL']
+        else:
+            print '\"p_value_or_adj\" argument can be only \'adj\' or \'p\'. It is currently set to \'' + p_value_or_adj + '\'.\n'
 
         for header in common_p_value_headers:
             if try_or(df, header) == 1:  # if we find a matching header
