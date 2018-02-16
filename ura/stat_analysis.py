@@ -365,7 +365,6 @@ def rank_and_score_df(series, genes_to_rank, value_name = 'z-score', abs_value =
 
 
 
-
 def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_value = False, top = 10):
 
     """
@@ -382,7 +381,6 @@ def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_val
         Returns: A sorted Pandas Dataframe of the top genes, mapping each gene to its z-score
 
     """
-
     # top activating and inhibiting, sort by strongest zscore or log(pvalue)
     if abs_value == True:
         top_series_abs = z_score_series.abs().sort_values(ascending=False).head(top)
@@ -392,13 +390,13 @@ def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_val
 
     # top activating
     if act == True:
-        z_score_series.sort_values(ascending=False).head(top)
-        z_score_series.rename('z-score')
+        z_score_series = z_score_series.sort_values(ascending=False).head(top)
+        z_score_series = z_score_series.rename('z-score')
 
     # top inhibiting
     else:
-        z_score_series.sort_values(ascending=True).head(top)
-        z_score_series.rename('z-score')
+        z_score_series = z_score_series.sort_values(ascending=True).head(top)
+        z_score_series = z_score_series.rename('z-score')
 
     # list of our top genes
     top_genes = list(z_score_series.index)
@@ -489,7 +487,8 @@ def vis_tf_network(DG, tf, DEG_filename, DEG_list,
                    node_spacing = 2200,
                    color_non_DEGs = False,
                    color_map = plt.cm.bwr,
-				   graph_id = 0
+				   graph_id = 0,
+                   tf_size_amplifier = 8
                    ):
 				   
     """
@@ -551,7 +550,6 @@ def vis_tf_network(DG, tf, DEG_filename, DEG_list,
     if color_non_DEGs == False: # if they don't want to see non-DEG's colors
         grey_list = [x for x in nodes if x not in DEG_list]
         for n in grey_list:
-            if n != tf:
                 node_to_color[n] = 'grey'
     
     # define node size
@@ -559,11 +557,10 @@ def vis_tf_network(DG, tf, DEG_filename, DEG_list,
     avg = np.average(list(nts.values()))
     max_size = np.max(list(nts.values()))
     node_to_size = {n:nts[n] if n in nts else avg for n in nodes}
-    node_to_size[tf] = max_size + 8
+    node_to_size[tf] = max_size + tf_size_amplifier
     
     # give DEG nodes an outline
     node_to_border_width = {n:2 if n in list(DEG_list) else 0 for n in nodes}
-    node_to_border_width[tf] = 0
     nx.set_node_attributes(G, name = 'nodeOutline', values = node_to_border_width) # give all nodes a default fold change of zero
 
     # define node shape
@@ -611,4 +608,31 @@ def vis_tf_network(DG, tf, DEG_filename, DEG_list,
                                             edge_selection_width = 5,
                                             node_border_width_selected = 0,
                                             graph_id = graph_id)
-    
+
+
+
+
+def to_csv(out_filename, z_score_series, DEG_to_pvalue, DEG_to_updown, tf_target_enrichment, DG_TF):
+    top_overall = top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act=False, abs_value=True,
+                             top=len(z_score_series))
+    top_overall.index.name = 'TF'
+
+    top_overall['TF_target_enrichment'] = tf_target_enrichment
+    TF_to_neighbors = [list([str(x) for x in DG_TF.neighbors(tf)]) for tf in top_overall.index]
+    top_overall['targets'] = TF_to_neighbors
+
+    top_overall.to_csv(path_or_buf=out_filename, sep='\t')
+
+    # Read in the file
+
+    with open(out_filename, 'r') as file:
+        filedata = file.read()
+
+    # Replace the target string
+    filedata = filedata.replace('[', '')
+    filedata = filedata.replace(']', '')
+    filedata = filedata.replace('\'', '')
+
+    # Write the file out again
+    with open(out_filename, 'w') as file:
+        file.write(filedata)

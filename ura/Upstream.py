@@ -330,7 +330,6 @@ class Upstream:
 
     # --------------------- DISPLAY FUNCTIONS --------------------------- #
 
-    # TODO: fix this header and function to print adjp and fold change
     def top_values(self, act=True, abs_value=False, top=10):
 
         # make sure user has run all prerequisites
@@ -340,16 +339,21 @@ class Upstream:
 
         return stat_analysis.top_values(self.z_scores, self.DEG_to_pvalue, self.DEG_to_updown, act, abs_value, top)
 
+
+
     # TODO: fix this make histogram
     def rank_and_score_df(self, series, genes_to_rank, value_name='z-score', abs_value=True, act=False, remove_dups=False):
         return stat_analysis.rank_and_score_df(series, genes_to_rank, value_name, abs_value, act, remove_dups)
+
+
 
     def vis_tf_network(self, tf,
                        directed_edges=False,
                        node_spacing=2200,
                        color_non_DEGs=False,
                        color_map=plt.cm.bwr,
-                       graph_id=0
+                       graph_id=0,
+                       tf_size_amplifier = 8
                        ):
 
         # make sure user has run all prerequisites
@@ -357,7 +361,20 @@ class Upstream:
             if self.check_exists(item) == False:
                 return -1
 
-        return stat_analysis.vis_tf_network(self.DG_TF, tf, self.DEG_filename, self.DEG_list, directed_edges, node_spacing, color_non_DEGs, color_map, graph_id)
+        return stat_analysis.vis_tf_network(self.DG_TF, tf, self.DEG_filename, self.DEG_list, directed_edges, node_spacing, color_non_DEGs, color_map, graph_id, tf_size_amplifier)
+
+
+
+
+    def to_csv(self, out_filename):
+
+        # make sure user has run all prerequisites
+        for item in ['z_scores', 'DEG_to_pvalue', 'DEG_to_updown', 'tf_target_enrichment', 'DG_TF']:
+            if self.check_exists(item) == False:
+                return -1
+
+        stat_analysis.to_csv(out_filename, self.z_scores, self.DEG_to_pvalue, self.DEG_to_updown, self.tf_target_enrichment, self.DG_TF)
+
 
     # ------------------- HELPER FUNCTIONS ------------------------------ #
 
