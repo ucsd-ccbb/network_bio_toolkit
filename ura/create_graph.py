@@ -13,12 +13,12 @@ import mygene
 # ----------------------------- TRANSCRIPTION FACTOR -------------------------- #
 
 
-def load_slowkow(filename_list=['../TF_databases/slowkow_databases/TRED_TF.txt',
-                                   '../TF_databases/slowkow_databases/ITFP_TF.txt',
-                                   '../TF_databases/slowkow_databases/ENCODE_TF.txt',
-                                   '../TF_databases/slowkow_databases/Neph2012_TF.txt',
-                                   '../TF_databases/slowkow_databases/TRRUST_TF.txt',
-                                   '../TF_databases/slowkow_databases/Marbach2016_TF.txt']):
+def load_slowkow(filename_list=['../../TF_databases/slowkow_databases/TRED_TF.txt',
+                                   '../../TF_databases/slowkow_databases/ITFP_TF.txt',
+                                   '../../TF_databases/slowkow_databases/ENCODE_TF.txt',
+                                   '../../TF_databases/slowkow_databases/Neph2012_TF.txt',
+                                   '../../TF_databases/slowkow_databases/TRRUST_TF.txt',
+                                   '../../TF_databases/slowkow_databases/Marbach2016_TF.txt']):
 
     """
         This function assumes you are using files that are formatted as a single list of "sep" separated
@@ -66,14 +66,14 @@ def load_jaspar(filename = 'jaspar_genereg_matrix.txt'):
 
 
 def easy_load_TF_list(slowkow_bool=True,
-                    slowkow_files=['../TF_databases/slowkow_databases/TRED_TF.txt',
-                                   '../TF_databases/slowkow_databases/ITFP_TF.txt',
-                                   '../TF_databases/slowkow_databases/ENCODE_TF.txt',
-                                   '../TF_databases/slowkow_databases/Neph2012_TF.txt',
-                                   '../TF_databases/slowkow_databases/TRRUST_TF.txt',
-                                   '../TF_databases/slowkow_databases/Marbach2016_TF.txt'],
+                    slowkow_files=['../../TF_databases/slowkow_databases/TRED_TF.txt',
+                                   '../../TF_databases/slowkow_databases/ITFP_TF.txt',
+                                   '../../TF_databases/slowkow_databases/ENCODE_TF.txt',
+                                   '../../TF_databases/slowkow_databases/Neph2012_TF.txt',
+                                   '../../TF_databases/slowkow_databases/TRRUST_TF.txt',
+                                   '../../TF_databases/slowkow_databases/Marbach2016_TF.txt'],
                     jaspar_bool=True,
-                    jaspar_file="../TF_databases/jaspar_genereg_matrix.txt",
+                    jaspar_file="../../TF_databases/jaspar_genereg_matrix.txt",
                     gene_type = "symbol"):
     """
         This function loads The 2016 version of Jaspar's TF database, which can be dowloaded as a .txt file from
@@ -337,7 +337,7 @@ def load_newline_sep_file(filename, column_header = 'genes'):
 def translate_gene_type(to_translate, before_gene_type, after_gene_type, G = None):
 
     mg = mygene.MyGeneInfo()
-    mg_temp = mg.querymany(to_translate, scopes=before_gene_type, fields=after_gene_type)
+    mg_temp = mg.querymany(to_translate, scopes=before_gene_type, fields=after_gene_type, species = 'human')
     before_list = [x['query'] for x in mg_temp]
     after_list = [x[after_gene_type] if after_gene_type in x.keys() else 'None' for x in mg_temp]
     before_to_after = dict(zip(before_list, after_list))

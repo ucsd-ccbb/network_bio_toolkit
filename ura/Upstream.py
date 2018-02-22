@@ -192,12 +192,12 @@ class Upstream:
 
     # ----------------------------- TRANSCRIPTION FACTOR -------------------------- #
 
-    def load_slowkow(self, filename_list=['../TF_databases/slowkow_databases/TRED_TF.txt',
-                                '../TF_databases/slowkow_databases/ITFP_TF.txt',
-                                '../TF_databases/slowkow_databases/ENCODE_TF.txt',
-                                '../TF_databases/slowkow_databases/Neph2012_TF.txt',
-                                '../TF_databases/slowkow_databases/TRRUST_TF.txt',
-                                '../TF_databases/slowkow_databases/Marbach2016_TF.txt']):
+    def load_slowkow(self, filename_list=['../../TF_databases/slowkow_databases/TRED_TF.txt',
+                                '../../TF_databases/slowkow_databases/ITFP_TF.txt',
+                                '../../TF_databases/slowkow_databases/ENCODE_TF.txt',
+                                '../../TF_databases/slowkow_databases/Neph2012_TF.txt',
+                                '../../TF_databases/slowkow_databases/TRRUST_TF.txt',
+                                '../../TF_databases/slowkow_databases/Marbach2016_TF.txt']):
         TF_list = create_graph.load_slowkow(filename_list)
         self.TF_list = TF_list
 
@@ -206,14 +206,14 @@ class Upstream:
         self.TF_list = TF_list
 
     def easy_load_TF_list(self, slowkow_bool=True,
-                          slowkow_files=['../TF_databases/slowkow_databases/TRED_TF.txt',
-                                         '../TF_databases/slowkow_databases/ITFP_TF.txt',
-                                         '../TF_databases/slowkow_databases/ENCODE_TF.txt',
-                                         '../TF_databases/slowkow_databases/Neph2012_TF.txt',
-                                         '../TF_databases/slowkow_databases/TRRUST_TF.txt',
-                                         '../TF_databases/slowkow_databases/Marbach2016_TF.txt'],
+                          slowkow_files=['../../TF_databases/slowkow_databases/TRED_TF.txt',
+                                         '../../TF_databases/slowkow_databases/ITFP_TF.txt',
+                                         '../../TF_databases/slowkow_databases/ENCODE_TF.txt',
+                                         '../../TF_databases/slowkow_databases/Neph2012_TF.txt',
+                                         '../../TF_databases/slowkow_databases/TRRUST_TF.txt',
+                                         '../../TF_databases/slowkow_databases/Marbach2016_TF.txt'],
                           jaspar_bool=True,
-                          jaspar_file="../TF_databases/jaspar_genereg_matrix.txt"):
+                          jaspar_file="../../TF_databases/jaspar_genereg_matrix.txt"):
 
         TF_list = create_graph.easy_load_TF_list(slowkow_bool, slowkow_files, jaspar_bool, jaspar_file, self.gene_type)
         self.TF_list = TF_list

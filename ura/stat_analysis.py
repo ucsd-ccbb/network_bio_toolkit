@@ -71,7 +71,9 @@ def tf_pvalues(DG_TF, DG_universe, DEG_list):
 
 
 def tf_target_enrichment(DG_TF, DG_universe, DEG_list):
-    return tf_pvalues(DG_TF, DG_universe, DEG_list)
+    to_return = tf_pvalues(DG_TF, DG_universe, DEG_list)
+    to_return = to_return.rename('tf-target enrichment')
+    return to_return
 
 
 def tf_enrichment(TF_list, DEG_full_graph, DEG_list):
@@ -119,9 +121,13 @@ def tf_zscore(DG, DEG_list, bias_filter = 0.25):
     bias = calculate_bias(DG)
     if abs(bias) > bias_filter:
         print 'Graph has bias of ' + str(bias) + '. Adjusting z-score calculation accordingly.'
-        return bias_corrected_tf_zscore(DG, DEG_list, bias)
+        to_return = bias_corrected_tf_zscore(DG, DEG_list, bias)
+        to_return = to_return.rename('biased-calculated z-scores')
+        return to_return
     else:
-        return not_bias_corrected_tf_zscore(DG, DEG_list)
+        to_return = not_bias_corrected_tf_zscore(DG, DEG_list)
+        to_return = to_return.rename('unbiased-calculated z-scores')
+        return to_return
 
 
 def not_bias_corrected_tf_zscore(DG, DEG_list):
