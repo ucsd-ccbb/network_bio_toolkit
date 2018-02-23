@@ -340,11 +340,13 @@ class Upstream:
         return stat_analysis.top_values(self.z_scores, self.DEG_to_pvalue, self.DEG_to_updown, act, abs_value, top)
 
 
+    def compare_genes(self, genes_to_rank, fig_size=(12, 7), font_size=12, anno_vert_dist=0.025):
 
-    # TODO: fix this make histogram
-    def rank_and_score_df(self, series, genes_to_rank, value_name='z-score', abs_value=True, act=False, remove_dups=False):
-        return stat_analysis.rank_and_score_df(series, genes_to_rank, value_name, abs_value, act, remove_dups)
-
+        # make sure user has run all prerequisites
+        if self.check_exists('z_scores') == False:
+            return -1
+                
+        stat_analysis.compare_genes(self.z_scores, genes_to_rank, fig_size=fig_size, font_size=font_size, anno_vert_dist=anno_vert_dist)
 
 
     def vis_tf_network(self, tf,

@@ -516,3 +516,5 @@ def check_fold_change_header(df, fold_change_column_header):
             print 'We could not find a fold change column header in your file.'
             print 'Please specify one with parameter \'fold_change_column_header\'.\n'
             return -1
+
+

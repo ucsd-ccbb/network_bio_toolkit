@@ -12,6 +12,7 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats
+import seaborn as sns
 
 import visJS2jupyter.visJS_module as visJS_module # "pip install visJS2jupyter"
 import create_graph # from URA package
@@ -336,40 +337,6 @@ def bias_corrected_tf_zscore(DG, DEG_list, bias):
 # --------------------- DISPLAY FUNCTIONS ---------------------------#
 
 
-def rank_and_score_df(series, genes_to_rank, value_name = 'z-score', abs_value = True, act = False, remove_dups = False):
-
-    """
-        This function ranks an input set of genes (genes_to_rank) based on each gene's zscore relative to all calculated
-        z-scores(series). By default, this function assumes it is sorting by z-score, but this funciton can also be
-        used for pvalue. You can choose to sort by most activating (abs_value = False, act = True), most inhibiting
-        (abs_value = False, act = False), or highest absolute zscore (abs_value = True).
-
-        Args:
-            series: a Pandas Series that maps all TF's to their calculated z-scores (or p-values)
-            genes_to_rank: a list of strings, the genes symbols that you wish to know the rankings of
-            value_name: string, this will be the title of the third column of the output Dataframe (should match what
-                series maps to)
-            abs_value: Boolean, True to rank based on absolute z-score, False otherwise
-            act: Boolean, True to rank by most positive z-score, False to rank by most negative. Ignored if abs_value
-                is True.
-            remove_dups: Boolean, True to give genes with the same z-score the same rank, False to assign every gene a
-                different rank even if they have the same z-score.
-
-        Returns: A sorted Pandas Dataframe displaying each gene symbol alongside its rank and z-score
-
-    """
-
-    genes_to_rank = list(set(genes_to_rank)) # cannot have any duplicates
-    scores = series.loc[genes_to_rank]
-    ranks, num_ranks = rank(series, genes_to_rank, abs_value, act, remove_dups)
-
-    df = pd.concat([ranks, scores], axis=1)
-    df = df.rename(columns={0: 'rank', 1: value_name})
-
-    df = df.sort_values(['rank'], ascending=True)
-    return df
-
-
 
 def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_value = False, top = 10):
 
@@ -418,75 +385,50 @@ def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_val
     return pd.concat([z_score_series, p_series, fld_series], axis=1)
 
 
-def rank(series, genes_to_rank, abs_value=False, act=True, remove_dups = False): # TODO: output histogram
 
-    """
-        This function ranks an input set of genes (genes_to_rank) based on each gene's z-score relative to all calculated
-        z-scores(series). By default, this function assumes it is sorting by z-score, but this funciton can also be
-        used for pvalue. You can choose to sort by most activating (abs_value = False, act = True), most inhibiting
-        (abs_value = False, act = False), or highest absolute zscore (abs_value = True).
 
-        Args:
-            series: a Pandas Series that maps all TF's to their calculated z-scores (or p-values)
-            genes_to_rank: a list of strings, the genes symbols that you wish to know the rankings of
-            abs_value: Boolean, True to rank based on absolute z-score, False otherwise
-            act: Boolean, True to rank by most positive z-score, False to rank by most negative. Ignored if abs_value
-                is True.
-            remove_dups: Boolean, True to give genes with the same z-score the same rank, False to assign every gene a
-                different rank even if they have the same z-score.
+def compare_genes(z_scores, genes_to_rank, fig_size=(12, 7), font_size=12, anno_vert_dist=0.025):
+    # We don't want to plot the zero z-scores
+    z_scores_hist = [x for x in z_scores if x != 0]
 
-        Returns: A sorted Pandas Series mapping each gene symbol to its rank
-
-    """
-
-    # genes with the same p_value/zscore will be given different ranks depending on the order they are stored in
-    if remove_dups == False:
-        if abs_value == True:
-            sorted_dict = sorted(dict(series.abs()).items(), key=lambda x: x[1], reverse=True)
+    # group together gene names based on their z-scores
+    annotate_list = []
+    new_genes_to_rank = []
+    for i in range(len(genes_to_rank)):
+        if genes_to_rank[i] in z_scores:
+            new_genes_to_rank.append(genes_to_rank[i])
+            annotate_list = put_in_bucket(z_scores, annotate_list, genes_to_rank[i])
         else:
-            if act == True:
-                sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=True)
-            else:
-                sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=False)
+            print str(genes_to_rank[i]) + ' is not a valid transcription factor in our graph.'
+    genes_to_rank = new_genes_to_rank
 
-        genes = zip(*sorted_dict)[0]
-        index = range(len(sorted_dict))
-        gene_to_index = dict(zip(genes, index)) # mapping genes to their order in the sorted gene list
+    # base x-axis off z-scores
+    x_points = []
+    for i in range(len(annotate_list)):
+        x_points.append(z_scores[annotate_list[i][0]])
 
-        return_series = pd.Series({k: gene_to_index.get(k, None) for k in genes_to_rank}).sort_values(ascending=True)
-        num_ranks = len(gene_to_index)
-        return return_series, num_ranks
+    y_points = [0] * len(annotate_list)
 
-    # genes with the same p_value will be given the same rank
-    else:
-        if abs_value == True:
-            sorted_dict = sorted(dict(series.abs()).items(), key=lambda x: x[1], reverse=True)
-            rank_values = sorted(set(abs(series.values)), reverse = True)
-        else:
-            if act == True:
-                sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=True)
-                rank_values = sorted(set(series.values), reverse = True)
-            else:
-                sorted_dict = sorted(dict(series).items(), key=lambda x: x[1], reverse=False)
-                rank_values = sorted(set(series.values), reverse = False)
+    # plot points
+    plt.figure(figsize=fig_size)
+    ax = sns.distplot(z_scores_hist, kde=True)
+    plt.scatter(x_points, y_points, marker='^', s=200, c='r')
 
-        genes = zip(*sorted_dict)[0]
-        index = range(len(rank_values))
-        value_to_index = dict(zip(rank_values, index)) # mapping the sorted set of possible values to their order
+    # annotate points
+    for i in range(len(annotate_list)):
+        to_print = str(annotate_list[i]).replace("[", "")
+        to_print = to_print.replace("]", "")
+        to_print = to_print.replace("\'", "")
+        ax.annotate(to_print,
+                    xy=(x_points[i],
+                        anno_vert_dist),
+                    rotation=90,
+                    horizontalalignment='center',
+                    verticalalignment='bottom',
+                    fontsize=font_size)
 
-        if abs_value == True:
-            gene_index_list = [value_to_index[abs(series[gene])] for gene in genes]  # finding the rank for each gene
-        else:
-            gene_index_list = [value_to_index[series[gene]] for gene in genes] # finding the rank for each gene
 
-        gene_to_index = dict(zip(genes, gene_index_list)) # mapping genes to their rank
 
-        return_series = pd.Series({k: gene_to_index.get(k, None) for k in genes_to_rank}).sort_values(ascending=True)
-        num_ranks = str(len(index))
-
-        return return_series, num_ranks
-		
-		
 		
 def vis_tf_network(DG, tf, DEG_filename, DEG_list,
                    directed_edges = False,
@@ -642,3 +584,37 @@ def to_csv(out_filename, z_score_series, DEG_to_pvalue, DEG_to_updown, tf_target
     # Write the file out again
     with open(out_filename, 'w') as file:
         file.write(filedata)
+
+
+
+# --------------------- HELPER FUNCTIONS ---------------------------#
+
+
+def put_in_bucket(d, l, value):
+    # dummy list to prevent ['string'] -> ['s','t','r','i','n','g']
+    dummy = []
+
+    # if list is empty, init it
+    if len(l) == 0:
+        dummy.append(value)
+        return dummy
+    else:
+
+        # else search to see if the value fits into an existing bucket
+        for i in range(len(l)):
+
+            # along the way, make sure this is a list of lists
+            if type(l[i]) != list:
+                dummy.append(l[i])
+                l[i] = dummy
+                dummy = []
+
+            # aka find a bucket with same z-score as value's
+            if d[l[i][0]] == d[value]:
+                l[i].append(value)
+                return l
+
+        # if our value (gene) doesn't have a bucket to go in, make a new one at the end of the list
+        dummy.append(value)
+        l.append(dummy)
+        return l
