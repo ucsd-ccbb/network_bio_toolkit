@@ -467,6 +467,8 @@ def vis_tf_network(DG, tf, DEG_filename, DEG_list,
         Returns: HTML output that will display an interactive network in a jupyter notebooks cell.
 
     """
+	
+    DEG_list = list(DEG_list)
     
     #------------ GRAPH --------------#
 

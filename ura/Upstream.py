@@ -345,7 +345,7 @@ class Upstream:
         # make sure user has run all prerequisites
         if self.check_exists('z_scores') == False:
             return -1
-                
+
         stat_analysis.compare_genes(self.z_scores, genes_to_rank, fig_size=fig_size, font_size=font_size, anno_vert_dist=anno_vert_dist)
 
 
