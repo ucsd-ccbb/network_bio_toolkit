@@ -430,7 +430,8 @@ def compare_genes(z_scores, genes_to_rank, fig_size=(12, 7), font_size=12, anno_
 
 
 		
-def vis_tf_network(DG, tf, DEG_filename, DEG_list,
+def vis_tf_network(DG, tf, DEG_list,
+                   DEG_to_pvalue, DEG_to_updown,
                    directed_edges = False,
                    node_spacing = 2200,
                    color_non_DEGs = False,
@@ -491,7 +492,6 @@ def vis_tf_network(DG, tf, DEG_filename, DEG_list,
     pos = nx.spring_layout(G)
     
     # define node colors
-    DEGs, DEG_to_pvalue, DEG_to_updown = create_graph.create_DEG_list(DEG_filename, p_value_filter = 1) # get info for all
     node_to_fld = {n: DEG_to_updown[n] for n in nodes if n in DEG_to_updown} # keep only those in graph G
     nx.set_node_attributes(G, 'fold_change', 0) # give all nodes a default fold change of zero
     nx.set_node_attributes(G, 'fold_change', node_to_fld) # overwrite with actual fold change for the nodes that have one
@@ -503,7 +503,7 @@ def vis_tf_network(DG, tf, DEG_filename, DEG_list,
                 node_to_color[n] = 'grey'
     
     # define node size
-    nts = {n: (2+(-np.log(DEG_to_pvalue[n]))) for n in nodes if n in DEG_to_updown} # keep only those in graph G
+    nts = {n: (2 + (-np.log(DEG_to_pvalue[n]))) for n in nodes if n in DEG_to_updown}  # keep only those in graph G
     avg = np.average(list(nts.values()))
     max_size = np.max(list(nts.values()))
     node_to_size = {n:nts[n] if n in nts else avg for n in nodes}

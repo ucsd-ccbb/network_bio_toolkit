@@ -74,7 +74,8 @@ def easy_load_TF_list(slowkow_bool=True,
                                    '../../TF_databases/slowkow_databases/Marbach2016_TF.txt'],
                     jaspar_bool=True,
                     jaspar_file="../../TF_databases/jaspar_genereg_matrix.txt",
-                    gene_type = "symbol"):
+                    gene_type = "symbol",
+                    species = 'human'):
     """
         This function loads The 2016 version of Jaspar's TF database, which can be dowloaded as a .txt file from
         http://jaspar2016.genereg.net/. At the bottom of the page, navigate to the "Download" button. Open the
@@ -102,7 +103,7 @@ def easy_load_TF_list(slowkow_bool=True,
         TF_list.extend(jaspar_TFs)
 
     if gene_type == 'entrez':
-        G_entrez = translate_gene_type(TF_list, 'symbol', 'entrezgene')
+        G_entrez = translate_gene_type(TF_list, 'symbol', 'entrezgene', species = species)
         TF_list = list(G_entrez.nodes())
 
     return list(set(TF_list))
@@ -153,7 +154,7 @@ def load_small_STRING_to_digraph(filename, TF_list = []):
 
 
 
-def load_STRING_to_digraph(filename, TF_list, confidence_filter=400, gene_type = "symbol"):
+def load_STRING_to_digraph(filename, TF_list, confidence_filter=400, gene_type = "symbol", species = 'human'):
 
     """
         This function loads a subset of the STRING database from the file "9606.protein.actions.v10.5.txt"
@@ -222,7 +223,7 @@ def load_STRING_to_digraph(filename, TF_list, confidence_filter=400, gene_type =
         after_gene_type = 'symbol'
 
     # do the translation
-    DG_universe = translate_gene_type(to_translate, before_gene_type, after_gene_type, G_str)
+    DG_universe = translate_gene_type(to_translate, before_gene_type, after_gene_type, G_str, species)
 
     # filtered graph
     DG_TF = remove_source_nodes_from_list(DG_universe, TF_list)
@@ -288,8 +289,14 @@ def create_DEG_list(filename,
         df = df.loc[abs(df[fold_change_column_header]) > fold_change_filter]
 
     DEG_list = df[gene_column_header]
-    DEG_to_pvalue = dict(zip(df[gene_column_header], df[p_value_column_header]))
-    DEG_to_updown = dict(zip(df[gene_column_header], df[fold_change_column_header]))
+
+    DEG_list = list(DEG_list)
+    if (type(DEG_list[0]) != str):
+        DEG_list_temp = [str(int(x)) for x in DEG_list if (str(x) != 'nan')]
+        DEG_list = DEG_list_temp
+
+    DEG_to_pvalue = dict(zip(DEG_list, df[p_value_column_header]))
+    DEG_to_updown = dict(zip(DEG_list, df[fold_change_column_header]))
 
     if G != None:
         DG = add_node_attribute_from_dict(G, DEG_to_updown, attribute='updown')
@@ -334,12 +341,12 @@ def load_newline_sep_file(filename, column_header = 'genes'):
     return return_list
 
 
-def translate_gene_type(to_translate, before_gene_type, after_gene_type, G = None):
+def translate_gene_type(to_translate, before_gene_type, after_gene_type, G = None, species = 'human'):
 
     mg = mygene.MyGeneInfo()
-    mg_temp = mg.querymany(to_translate, scopes=before_gene_type, fields=after_gene_type, species = 'human')
+    mg_temp = mg.querymany(to_translate, scopes=before_gene_type, fields=after_gene_type, species = species)
     before_list = [x['query'] for x in mg_temp]
-    after_list = [x[after_gene_type] if after_gene_type in x.keys() else 'None' for x in mg_temp]
+    after_list = [str(x[after_gene_type]) if after_gene_type in x.keys() else 'None' for x in mg_temp]
     before_to_after = dict(zip(before_list, after_list))
 
     if G == None:

@@ -14,14 +14,19 @@ import copy
 
 class Upstream:
 
-    def __init__(self, gene_type = 'symbol'):
+    def __init__(self, gene_type = 'symbol', species = 'human'):
 
         # User has to provide a gene type
         if (gene_type != 'entrez') & (gene_type != 'symbol'):
             raise ValueError('Please specify either \"entrez\" or \"symbol\" as your initialization argument.\n')
 
+        # User has to provide a gene type
+        if (species != 'human') & (species != 'mouse'):
+            raise ValueError('Please specify either \"entrez\" or \"symbol\" as your initialization argument.\n')
+
         # instantiate all of our instance variables
         self.gene_type = gene_type
+        self.species = species
 
         # create_graph variables
         self.TF_list = None
@@ -41,6 +46,7 @@ class Upstream:
         # map string to actual instance variable
         self.string_to_item = {}
         self.string_to_item['gene_type'] = self.gene_type
+        self.string_to_item['species'] = self.species
         self.string_to_item['TF_list'] = self.TF_list
         self.string_to_item['DG_universe'] = self.DG_universe
         self.string_to_item['DG_TF'] = self.DG_TF
@@ -56,7 +62,9 @@ class Upstream:
         # instanciating error message dict
         self.item_to_message = {}
         self.item_to_message['gene_type'] = 'No gene type currently on file. Please create a new instance of Upstream using '\
-                             + 'Upstream(gene_type)'
+                             + 'Upstream(gene_type, species)'
+        self.item_to_message['species'] = 'No species declaration currently on file. Please create a new instance of Upstream using ' \
+                             + 'Upstream(gene_type, species)'
         self.item_to_message['TF_list'] = 'No transcription factor list currently on file. Please run one of the following methods:\n' \
                              + ' - Upstream.load_slowkow\n' \
                              + ' - Upstream.load_jaspar\n' \
@@ -94,7 +102,32 @@ class Upstream:
         self.item_to_message['z_scores'] = 'No z-score dictionary currently on file. Please run the following method:\n' \
                              + ' - Upstream.tf_zscore\n' \
                              + 'Or assign your own using self.z_score\n'
-        
+
+    def copyUpstream(self, upstream_instance):
+
+        to_return = Upstream(self.gene_type, self.species)
+
+        # create_graph variables
+        to_return.TF_list = self.get('TF_list')
+        to_return.DG_universe = self.get('DG_universe')
+        to_return.DG_TF = self.get('DG_TF')
+        to_return.DEG_list = self.get('DEG_list')
+        to_return.DEG_filename = self.get('DEG_filename')
+        to_return.DEG_to_pvalue = self.get('DEG_to_pvalue')
+        to_return.DEG_to_updown = self.get('DEG_to_updown')
+        to_return.DEG_full_graph = self.get('DEG_full_graph')
+
+        # stat_analysis variables
+        to_return.tf_target_enrichment = self.get('tf_target_enrichment')
+        to_return.tf_enrichment = self.get('tf_enrichment')
+        to_return.z_scores = self.get('z_scores')
+
+        # misc
+        to_return.string_to_item = self.string_to_item
+        to_return.item_to_message = self.item_to_message
+
+        return to_return
+
 
     def __repr__(self):
         return self.create_to_string()
@@ -103,7 +136,7 @@ class Upstream:
         return self.create_to_string()
 
     def create_to_string(self):
-        for item in ['gene_type', 'TF_list', 'DG_universe', 'DG_TF', 'DEG_list', 'DEG_filename',
+        for item in ['gene_type', 'species', 'TF_list', 'DG_universe', 'DG_TF', 'DEG_list', 'DEG_filename',
                      'DEG_to_pvalue', 'DEG_to_updown', 'DEG_full_graph', 'tf_target_enrichment',
                      'tf_enrichment', 'z_scores']:
             print item + ': '
@@ -161,6 +194,7 @@ class Upstream:
 
         # map string to actual instance variable, then set that instance variable
         if item == 'gene_type': self.gene_type = value
+        elif item == 'species': self.species = value
         elif item == 'TF_list': self.TF_list = value
         elif item == 'DG_universe': self.DG_universe = value
         elif item == 'DG_TF': self.DG_TF = value
@@ -175,6 +209,7 @@ class Upstream:
         else:
             print 'The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
                   + 'gene_type\n' \
+                  + 'species\n' \
                   + 'TF_list\n' \
                   + 'DG_universe\n' \
                   + 'DG_TF\n' \
@@ -215,14 +250,19 @@ class Upstream:
                           jaspar_bool=True,
                           jaspar_file="../../TF_databases/jaspar_genereg_matrix.txt"):
 
-        TF_list = create_graph.easy_load_TF_list(slowkow_bool, slowkow_files, jaspar_bool, jaspar_file, self.gene_type)
+        # make sure user has run all prerequisites
+        for item in ['gene_type', 'species']:
+            if self.check_exists(item) == False:
+                return
+
+        TF_list = create_graph.easy_load_TF_list(slowkow_bool, slowkow_files, jaspar_bool, jaspar_file, self.gene_type, self.species)
         self.TF_list = TF_list
 
 
     # ------------------------- BACKGROUND NETWORK ------------------------------------ #
 
 
-    def load_small_STRING_to_digraph(self, filename):
+    def load_small_STRING_to_digraph(self, filename): # TODO: check if we can entrez/species
 
         # make sure user has run all prerequisites
         if self.check_exists('TF_list') == False:
@@ -236,11 +276,11 @@ class Upstream:
     def load_STRING_to_digraph(self, filename, confidence_filter=400):
 
         # make sure user has run all prerequisites
-        for item in ['TF_list', 'gene_type']:
+        for item in ['TF_list', 'gene_type', 'species']:
             if self.check_exists(item) == False:
                 return
 
-        DG_TF, DG_universe = create_graph.load_STRING_to_digraph(filename, self.TF_list, confidence_filter, self.gene_type)
+        DG_TF, DG_universe = create_graph.load_STRING_to_digraph(filename, self.TF_list, confidence_filter, self.gene_type, self.species)
         self.DG_TF = DG_TF
         self.DG_universe = DG_universe
 
@@ -261,7 +301,7 @@ class Upstream:
                         fold_change_column_header=None):
 
         # make sure user has run all prerequisites
-        for item in ['DG_TF', 'gene_type']:
+        for item in ['DG_TF', 'gene_type', 'species']:
             if self.check_exists(item) == False:
                 return
 
@@ -359,11 +399,11 @@ class Upstream:
                        ):
 
         # make sure user has run all prerequisites
-        for item in ['DG_TF', 'DEG_filename', 'DEG_list']:
+        for item in ['DG_TF', 'DEG_list', 'DEG_to_pvalue', 'DEG_to_updown']:
             if self.check_exists(item) == False:
                 return -1
 
-        return stat_analysis.vis_tf_network(self.DG_TF, tf, self.DEG_filename, self.DEG_list, directed_edges, node_spacing, color_non_DEGs, color_map, graph_id, tf_size_amplifier)
+        return stat_analysis.vis_tf_network(self.DG_TF, tf, self.DEG_list, self.DEG_to_pvalue, self.DEG_to_updown, directed_edges, node_spacing, color_non_DEGs, color_map, graph_id, tf_size_amplifier)
 
 
 
@@ -386,6 +426,7 @@ class Upstream:
 
         # re-map it so it stays up to date
         self.string_to_item['gene_type'] = self.gene_type
+        self.string_to_item['species'] = self.species
         self.string_to_item['TF_list'] = self.TF_list
         self.string_to_item['DG_universe'] = self.DG_universe
         self.string_to_item['DG_TF'] = self.DG_TF
@@ -405,6 +446,7 @@ class Upstream:
         except:
             print 'The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
                   + '- gene_type\n' \
+                  + '- species\n' \
                   + '- TF_list\n' \
                   + '- DG_universe\n' \
                   + '- DG_TF\n' \
