@@ -102,6 +102,9 @@ def easy_load_TF_list(slowkow_bool=True,
         jaspar_TFs = load_jaspar(jaspar_file)
         TF_list.extend(jaspar_TFs)
 
+	if species == 'mouse':
+		TF_list = [x.title() for x in TF_list]
+		
     if gene_type == 'entrez':
         G_entrez = translate_gene_type(TF_list, 'symbol', 'entrezgene', species = species)
         TF_list = list(G_entrez.nodes())
