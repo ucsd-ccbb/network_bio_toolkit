@@ -103,28 +103,28 @@ class Upstream:
                              + ' - Upstream.tf_zscore\n' \
                              + 'Or assign your own using self.z_score\n'
 
-    def copyUpstream(self, upstream_instance):
+    def copyUpstream(self):
 
         to_return = Upstream(self.gene_type, self.species)
 
         # create_graph variables
-        to_return.TF_list = self.get('TF_list')
-        to_return.DG_universe = self.get('DG_universe')
-        to_return.DG_TF = self.get('DG_TF')
-        to_return.DEG_list = self.get('DEG_list')
-        to_return.DEG_filename = self.get('DEG_filename')
-        to_return.DEG_to_pvalue = self.get('DEG_to_pvalue')
-        to_return.DEG_to_updown = self.get('DEG_to_updown')
-        to_return.DEG_full_graph = self.get('DEG_full_graph')
+        to_return.TF_list = copy.deepcopy(self.TF_list)
+        to_return.DG_universe = copy.deepcopy(self.DG_universe)
+        to_return.DG_TF = copy.deepcopy(self.DG_TF)
+        to_return.DEG_list = copy.deepcopy(self.DEG_list)
+        to_return.DEG_filename = copy.deepcopy(self.DEG_filename)
+        to_return.DEG_to_pvalue = copy.deepcopy(self.DEG_to_pvalue)
+        to_return.DEG_to_updown = copy.deepcopy(self.DEG_to_updown)
+        to_return.DEG_full_graph = copy.deepcopy(self.DEG_full_graph)
 
         # stat_analysis variables
-        to_return.tf_target_enrichment = self.get('tf_target_enrichment')
-        to_return.tf_enrichment = self.get('tf_enrichment')
-        to_return.z_scores = self.get('z_scores')
+        to_return.tf_target_enrichment = copy.deepcopy(self.tf_target_enrichment)
+        to_return.tf_enrichment = copy.deepcopy(self.tf_enrichment)
+        to_return.z_scores = copy.deepcopy(self.z_scores)
 
         # misc
-        to_return.string_to_item = self.string_to_item
-        to_return.item_to_message = self.item_to_message
+        to_return.string_to_item = copy.deepcopy(self.string_to_item)
+        to_return.item_to_message = copy.deepcopy(self.item_to_message)
 
         return to_return
 
@@ -298,7 +298,8 @@ class Upstream:
 
                         gene_column_header=None,
                         p_value_column_header=None,
-                        fold_change_column_header=None):
+                        fold_change_column_header=None,
+						sep = '\t'):
 
         # make sure user has run all prerequisites
         for item in ['DG_TF', 'gene_type', 'species']:
@@ -307,7 +308,7 @@ class Upstream:
 
         # create the DEG list with specified cut-offs
         DEG_list, DG_TF = create_graph.create_DEG_list(filename, self.DG_TF, p_value_filter, p_value_or_adj,
-                fold_change_filter, self.gene_type, gene_column_header, p_value_column_header, fold_change_column_header)
+                fold_change_filter, self.gene_type, gene_column_header, p_value_column_header, fold_change_column_header, sep)
 
         self.DEG_list = DEG_list
         self.DEG_filename = filename
@@ -320,7 +321,8 @@ class Upstream:
                     gene_type = self.gene_type,
                     gene_column_header=gene_column_header,
                     p_value_column_header=p_value_column_header,
-                    fold_change_column_header=fold_change_column_header
+                    fold_change_column_header=fold_change_column_header,
+					sep = sep
                     )
         self.DEG_full_graph = DEG_full_graph
         self.DEG_to_pvalue = DEG_to_pvalue # keep track of all genes' (adj) p-values

@@ -248,7 +248,9 @@ def create_DEG_list(filename,
 
                     gene_column_header=None,
                     p_value_column_header=None,
-                    fold_change_column_header=None
+                    fold_change_column_header=None,
+					
+					sep = '\t'
                     ):
 
     """
@@ -269,7 +271,7 @@ def create_DEG_list(filename,
 
     """
 
-    df = pd.DataFrame.from_csv(filename, sep='\t')
+    df = pd.DataFrame.from_csv(filename, sep=sep)
 
     # check to make sure we know which column headers to use
     gene_column_header = check_gene_header(df, gene_column_header, gene_type)
@@ -314,7 +316,8 @@ def create_DEG_full_graph(filename,
                     gene_type='symbol',  # 'symbol' or 'entrez'
                     gene_column_header=None,
                     p_value_column_header=None,
-                    fold_change_column_header=None
+                    fold_change_column_header=None,
+					sep = '\t'
                     ):
 
     DEG_full_list, DEG_to_pvalue, DEG_to_updown = create_DEG_list(filename,
@@ -323,7 +326,8 @@ def create_DEG_full_graph(filename,
                     gene_type=gene_type,  # 'symbol' or 'entrez'
                     gene_column_header=gene_column_header,
                     p_value_column_header=p_value_column_header,
-                    fold_change_column_header=fold_change_column_header
+                    fold_change_column_header=fold_change_column_header,
+					sep = sep
                     )
 
     DEG_full_graph = nx.DiGraph()
