@@ -1,6 +1,6 @@
 """
 -------------------------------------------
-Author: Mikayla Webster (m1webste@ucsd.edu)
+Author: Mikayla Webster (13webstermj@gmail.com)
 Date: 10/13/17
 -------------------------------------------
 """
@@ -12,103 +12,47 @@ import mygene
 
 # ----------------------------- TRANSCRIPTION FACTOR -------------------------- #
 
-
-def load_slowkow(filename_list=['../../TF_databases/slowkow_databases/TRED_TF.txt',
-                                   '../../TF_databases/slowkow_databases/ITFP_TF.txt',
-                                   '../../TF_databases/slowkow_databases/ENCODE_TF.txt',
-                                   '../../TF_databases/slowkow_databases/Neph2012_TF.txt',
-                                   '../../TF_databases/slowkow_databases/TRRUST_TF.txt',
-                                   '../../TF_databases/slowkow_databases/Marbach2016_TF.txt']):
-
-    """
-        This function assumes you are using files that are formatted as a single list of "sep" separated
-        transcription factors. While this method is intended to load the slowkow database, any files of the
-        correct format can be processed using this method.
-
-        Args:
-            filename_list: list of strings, a list of six files from which to extract the slowkow database, or whichever files you wish
-                to extract transcription factors from
-            sep: string, the type of deliminator separating your TF entries
-
-        Returns: A list of all unique transcription factors from the lists provided
-
-    """
-
-    # read files formatted as \n separated items
-    return_list = []
-    for filename in filename_list:
-        to_add = load_newline_sep_file(filename)
-        return_list.extend([x.upper() for x in to_add])
-
-    # remove duplicates
-    return set(return_list)
-
-
-
-
-def load_jaspar(filename = 'jaspar_genereg_matrix.txt'):
-
-    """
-        This function loads The 2016 version of Jaspar's TF database, which can be dowloaded as a .txt file from
-        http://jaspar2016.genereg.net/. At the bottom of the page, navigate to the "Download" button. Open the
-        "database" file and download "MATRIX.txt".
-        Args:
-            filename: string, the path to the jaspar "MATRIX.txt" file
-        Returns: A list of all unique transcription factors from the file provided
-    """
-
-    # parse jaspar file
-    jasp_df = pd.read_csv(filename, sep="\t", header=None, names=['col1', 'col2', 'col3', 'col4', 'tf_genes'])
-
-    # return transcription factors with ALL CAPS names
-    return list(set(jasp_df['tf_genes'].str.upper()))
-
-
-
-def easy_load_TF_list(slowkow_bool=True,
-                    slowkow_files=['../../TF_databases/slowkow_databases/TRED_TF.txt',
-                                   '../../TF_databases/slowkow_databases/ITFP_TF.txt',
-                                   '../../TF_databases/slowkow_databases/ENCODE_TF.txt',
-                                   '../../TF_databases/slowkow_databases/Neph2012_TF.txt',
-                                   '../../TF_databases/slowkow_databases/TRRUST_TF.txt',
-                                   '../../TF_databases/slowkow_databases/Marbach2016_TF.txt'],
-                    jaspar_bool=True,
-                    jaspar_file="../../TF_databases/jaspar_genereg_matrix.txt",
-                    gene_type = "symbol",
-                    species = 'human'):
-    """
-        This function loads The 2016 version of Jaspar's TF database, which can be dowloaded as a .txt file from
-        http://jaspar2016.genereg.net/. At the bottom of the page, navigate to the "Download" button. Open the
-        "database" file and download "MATRIX.txt".
-
-        Args:
-            slowkow_bool: boolean, whether or not to include the slowkow databases
-            slowkow_files: list or strings, a list of input file path names to the load_slowkow method
-            slowkow_sep: string, the type of deliminator used in the slowkow_files to separate the transcription factors
-            jaspar_bool: boolean, whether or not to include the jaspar database
-            jaspar_file: string, the file path where to find the jaspar database
-
-        Returns: A list of all unique transcription factors from the files provided
-
-    """
-
+def easy_load_TF_list(csv_filename, jaspar = True, TRED = True, ITFP = True, ENCODE = True, 
+                      Neph2012 = True, TRRUST = True, Marbach2016 = True, species = 'human', gene_type = 'symbol'):
+    
+    df2 = pd.DataFrame.from_csv(csv_filename)
     TF_list = []
-
-    if slowkow_bool == True:
-        slowkow_TFs = load_slowkow(slowkow_files)
-        TF_list.extend(slowkow_TFs)
-
-    if jaspar_bool == True:
-        jaspar_TFs = load_jaspar(jaspar_file)
-        TF_list.extend(jaspar_TFs)
-
+    
+    if (jaspar == True):
+        jaspar_list = list((df2.loc[df2['jaspar'] == 1])['jaspar'].index)
+        TF_list.extend(jaspar_list)
+        
+    if (TRED == True):    
+        TRED_list = list((df2.loc[df2['TRED'] == 1])['TRED'].index)
+        TF_list.extend(TRED_list)
+        
+    if (ITFP == True):    
+        ITFP_list = list((df2.loc[df2['ITFP'] == 1])['ITFP'].index)
+        TF_list.extend(ITFP_list)
+        
+    if (ENCODE == True):    
+        ENCODE_list = list((df2.loc[df2['ENCODE'] == 1])['ENCODE'].index)
+        TF_list.extend(ENCODE_list)
+        
+    if (Neph2012 == True):   
+        Neph_list = list((df2.loc[df2['Neph2012'] == 1])['Neph2012'].index)
+        TF_list.extend(Neph_list)
+        
+    if (TRRUST == True):    
+        TRRUST_list = list((df2.loc[df2['TRRUST'] == 1])['TRRUST'].index)
+        TF_list.extend(TRRUST_list )
+        
+    if (Marbach2016 == True):    
+        Marbach_list = list((df2.loc[df2['Marbach2016'] == 1])['Marbach2016'].index)
+        TF_list.extend(Marbach_list)
+		
 	if species == 'mouse':
 		TF_list = [x.title() for x in TF_list]
 		
     if gene_type == 'entrez':
         G_entrez = translate_gene_type(TF_list, 'symbol', 'entrezgene', species = species)
         TF_list = list(G_entrez.nodes())
-
+        
     return list(set(TF_list))
 
 

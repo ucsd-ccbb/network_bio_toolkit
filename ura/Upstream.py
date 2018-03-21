@@ -1,6 +1,6 @@
 """
 -------------------------------------------
-Author: Mikayla Webster (m1webste@ucsd.edu)
+Author: Mikayla Webster (13webstermj@gmail.com)
 Date: 2/5/18
 -------------------------------------------
 """
@@ -108,13 +108,13 @@ class Upstream:
         to_return = Upstream(self.gene_type, self.species)
 
         # create_graph variables
-        to_return.TF_list = copy.deepcopy(self.TF_list)
+        to_return.TF_list = self.TF_list
         to_return.DG_universe = copy.deepcopy(self.DG_universe)
         to_return.DG_TF = copy.deepcopy(self.DG_TF)
-        to_return.DEG_list = copy.deepcopy(self.DEG_list)
-        to_return.DEG_filename = copy.deepcopy(self.DEG_filename)
-        to_return.DEG_to_pvalue = copy.deepcopy(self.DEG_to_pvalue)
-        to_return.DEG_to_updown = copy.deepcopy(self.DEG_to_updown)
+        to_return.DEG_list = self.DEG_list
+        to_return.DEG_filename = self.DEG_filename
+        to_return.DEG_to_pvalue = self.DEG_to_pvalue
+        to_return.DEG_to_updown = self.DEG_to_updown
         to_return.DEG_full_graph = copy.deepcopy(self.DEG_full_graph)
 
         # stat_analysis variables
@@ -123,8 +123,8 @@ class Upstream:
         to_return.z_scores = copy.deepcopy(self.z_scores)
 
         # misc
-        to_return.string_to_item = copy.deepcopy(self.string_to_item)
-        to_return.item_to_message = copy.deepcopy(self.item_to_message)
+        to_return.string_to_item = self.string_to_item
+        to_return.item_to_message = self.item_to_message
 
         return to_return
 
@@ -227,35 +227,15 @@ class Upstream:
 
     # ----------------------------- TRANSCRIPTION FACTOR -------------------------- #
 
-    def load_slowkow(self, filename_list=['../../TF_databases/slowkow_databases/TRED_TF.txt',
-                                '../../TF_databases/slowkow_databases/ITFP_TF.txt',
-                                '../../TF_databases/slowkow_databases/ENCODE_TF.txt',
-                                '../../TF_databases/slowkow_databases/Neph2012_TF.txt',
-                                '../../TF_databases/slowkow_databases/TRRUST_TF.txt',
-                                '../../TF_databases/slowkow_databases/Marbach2016_TF.txt']):
-        TF_list = create_graph.load_slowkow(filename_list)
-        self.TF_list = TF_list
-
-    def load_jaspar(self, filename='jaspar_genereg_matrix.txt'):
-        TF_list = create_graph.load_jaspar(filename)
-        self.TF_list = TF_list
-
-    def easy_load_TF_list(self, slowkow_bool=True,
-                          slowkow_files=['../../TF_databases/slowkow_databases/TRED_TF.txt',
-                                         '../../TF_databases/slowkow_databases/ITFP_TF.txt',
-                                         '../../TF_databases/slowkow_databases/ENCODE_TF.txt',
-                                         '../../TF_databases/slowkow_databases/Neph2012_TF.txt',
-                                         '../../TF_databases/slowkow_databases/TRRUST_TF.txt',
-                                         '../../TF_databases/slowkow_databases/Marbach2016_TF.txt'],
-                          jaspar_bool=True,
-                          jaspar_file="../../TF_databases/jaspar_genereg_matrix.txt"):
+    def easy_load_TF_list(self, csv_filename, jaspar = True, TRED = True, ITFP = True, ENCODE = True, 
+                          Neph2012 = True, TRRUST = True, Marbach2016 = True):
 
         # make sure user has run all prerequisites
         for item in ['gene_type', 'species']:
             if self.check_exists(item) == False:
                 return
 
-        TF_list = create_graph.easy_load_TF_list(slowkow_bool, slowkow_files, jaspar_bool, jaspar_file, self.gene_type, self.species)
+        TF_list = create_graph.easy_load_TF_list(csv_filename, jaspar, TRED, ITFP, ENCODE, Neph2012, TRRUST, Marbach2016, self.species, self.gene_type)
         self.TF_list = TF_list
 
 
@@ -397,7 +377,15 @@ class Upstream:
                        color_non_DEGs=False,
                        color_map=plt.cm.bwr,
                        graph_id=0,
-                       tf_size_amplifier = 8
+                       tf_size_amplifier = 8,
+					   alpha = 1.0, 
+				       color_vals_transform = None,
+				       ceil_val=10,
+                       color_max_frac = 1.0,
+				       color_min_frac = 0.0,
+				       vmin=None,
+				       vmax=None,
+					   tf_shape = 'star'
                        ):
 
         # make sure user has run all prerequisites
@@ -405,7 +393,8 @@ class Upstream:
             if self.check_exists(item) == False:
                 return -1
 
-        return stat_analysis.vis_tf_network(self.DG_TF, tf, self.DEG_list, self.DEG_to_pvalue, self.DEG_to_updown, directed_edges, node_spacing, color_non_DEGs, color_map, graph_id, tf_size_amplifier)
+        return stat_analysis.vis_tf_network(self.DG_TF, tf, self.DEG_list, self.DEG_to_pvalue, self.DEG_to_updown, directed_edges, node_spacing, color_non_DEGs, color_map, graph_id, tf_size_amplifier, alpha = alpha, color_vals_transform = color_vals_transform,
+        ceil_val = ceil_val, color_max_frac = color_max_frac, color_min_frac = color_min_frac, vmin = vmin, vmax = vmax, tf_shape = tf_shape)
 
 
 

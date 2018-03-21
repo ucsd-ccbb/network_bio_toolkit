@@ -1,6 +1,6 @@
 """
 -------------------------------------------
-Author: Mikayla Webster (m1webste@ucsd.edu)
+Author: Mikayla Webster (13webstermj@gmail.com)
 Date: 10/13/17
 -------------------------------------------
 """
@@ -437,7 +437,15 @@ def vis_tf_network(DG, tf, DEG_list,
                    color_non_DEGs = False,
                    color_map = plt.cm.bwr,
 				   graph_id = 0,
-                   tf_size_amplifier = 8
+                   tf_size_amplifier = 8,
+				   alpha = 1.0, 
+				   color_vals_transform = None,
+				   ceil_val=10,
+                   color_max_frac = 1.0,
+				   color_min_frac = 0.0,
+				   vmin=None,
+				   vmax=None,
+				   tf_shape = 'star'
                    ):
 				   
     """
@@ -495,7 +503,15 @@ def vis_tf_network(DG, tf, DEG_list,
     node_to_fld = {n: DEG_to_updown[n] for n in nodes if n in DEG_to_updown} # keep only those in graph G
     nx.set_node_attributes(G, 'fold_change', 0) # give all nodes a default fold change of zero
     nx.set_node_attributes(G, 'fold_change', node_to_fld) # overwrite with actual fold change for the nodes that have one
-    node_to_color = visJS_module.return_node_to_color(G, field_to_map='fold_change', cmap=color_map)
+    node_to_color = visJS_module.return_node_to_color(G, field_to_map='fold_change', 
+                                                        cmap = color_map, 
+                                                        alpha = alpha, 
+                                                        color_vals_transform = color_vals_transform,
+                                                        ceil_val = ceil_val,
+                                                        color_max_frac = color_max_frac,
+                                                        color_min_frac = color_min_frac,
+                                                        vmin = vmin,
+                                                        vmax = vmax)
 
     if color_non_DEGs == False: # if they don't want to see non-DEG's colors
         grey_list = [x for x in nodes if x not in DEG_list]
@@ -516,7 +532,7 @@ def vis_tf_network(DG, tf, DEG_list,
     # define node shape
     all_circles = ['circle']*len(nodes)
     node_to_shape = dict(zip(nodes, all_circles))
-    node_to_shape[tf] = 'star'
+    node_to_shape[tf] = tf_shape
     nx.set_node_attributes(G, name='shape', values=node_to_shape)  # give all nodes a default fold change of zero
     
     # define node attributes
