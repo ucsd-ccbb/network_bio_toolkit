@@ -4,7 +4,7 @@ network_bio_toolkit is toolbox of network biology methods currently including Up
 
 ## Getting Started
 
-These instructions will get you a copy of the package up and running on your local machine.
+These instructions will get a copy of the package up and running on your local machine.
 
 ### Prerequisites
 
@@ -58,7 +58,7 @@ These are available under the "notebooks" folder
 
 
 ## Authors
-**Mikayla Webster** (m1webste@ucsd.edu)
+**Mikayla Webster** (13webstermj@gmail.com)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
