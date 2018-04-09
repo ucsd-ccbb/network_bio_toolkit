@@ -7,8 +7,8 @@ Date: 6/4/18
 
 import community # pip install python-louvain
 import networkx as nx
-import visJS2jupyter.visJS_module as visJS_module
-import visJS2jupyter.visualizations as visualizations
+import visJS2jupyter.visJS_module as visJS_module # pip install visJS2jupyter
+import visJS2jupyter.visualizations as visualizations # pip install visJS2jupyter
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,12 +28,14 @@ def draw_clustering(G_DEG, DG_universe, seed_nodes,
                     node_size_multiplier = 10,
                     physics_enabled = False,
                     node_font_size = 40,
-                    graph_id = 3
+                    graph_id = 3,
+                    **kwargs
                    ):
     
     # find hottest genes
     if Wprime is None:
         Wprime = visualizations.normalized_adj_matrix(G_DEG)
+    
     Fnew = visualizations.network_propagation(G_DEG, Wprime, seed_nodes, alpha = alpha, num_its = num_its)
     top_genes = Fnew.sort_values(ascending=False)[0:num_top_genes].index
     G_top_genes = DG_universe.subgraph(top_genes)
@@ -95,7 +97,8 @@ def draw_clustering(G_DEG, DG_universe, seed_nodes,
                                       node_size_multiplier = node_size_multiplier,
                                       physics_enabled = physics_enabled,
                                       node_font_size = node_font_size,
-                                      graph_id = graph_id) 
+                                      graph_id = graph_id,
+                                      **kwargs) 
 
 def bias_position_by_partition(pos, partition, r=1.0, x_offset = 2, y_offset = 2):
     '''
