@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 def draw_clustering(G_DEG, DG_universe, seed_nodes,
+                    rad_positions = True,
                     Wprime = None,
                     alpha = 0.5,
                     num_its = 20,
@@ -53,7 +54,7 @@ def draw_clustering(G_DEG, DG_universe, seed_nodes,
     # remove stray nodes
     if remove_stray_nodes == True:
         not_grey_list = [n for n in nodes if node_to_color[n] != 'grey']
-        node_to_cluster = {n:node_to_cluster[n] for n in nodes if n not in grey_list}
+        node_to_cluster = {n:node_to_cluster[n] for n in nodes if n in not_grey_list}
 
         G_top_genes = nx.subgraph(G_top_genes, not_grey_list)
         nodes = G_top_genes.nodes()
@@ -61,7 +62,8 @@ def draw_clustering(G_DEG, DG_universe, seed_nodes,
 
     # position based on cluster
     pos = nx.spring_layout(G_top_genes)
-    bias_position_by_partition(pos, node_to_cluster, r = r, x_offset = x_offset, y_offset = y_offset); # modifies pos in place
+    if rad_positions == True:
+        bias_position_by_partition(pos, node_to_cluster, r = r, x_offset = x_offset, y_offset = y_offset); # modifies pos in place
 
     # set the title of each node
     nx.set_node_attributes(G_top_genes, 'cluster', node_to_cluster)

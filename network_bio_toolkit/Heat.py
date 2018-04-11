@@ -193,6 +193,7 @@ class Heat:
 #-------------------------- CLUSTERING -----------------------------------#
 
     def draw_clustering(self,
+                    rad_positions = True,
                     Wprime = None,
                     alpha = 0.5,
                     num_its = 20,
@@ -218,6 +219,7 @@ class Heat:
         seed_nodes = [n for n in self.DEG_list if n in self.G_DEG]
 
         return heat_and_cluster.draw_clustering(self.G_DEG, self.DG_universe, seed_nodes,
+                    rad_positions = rad_positions,
                     Wprime = Wprime,
                     alpha = alpha,
                     num_its = num_its,
