@@ -17,6 +17,8 @@ import pandas as pd
 def draw_clustering(G_DEG, DG_universe, seed_nodes,
                     rad_positions = True,
                     Wprime = None,
+                    k = None,
+                    largest_connected_component = False,
                     alpha = 0.5,
                     num_its = 20,
                     num_top_genes = 200,
@@ -40,9 +42,13 @@ def draw_clustering(G_DEG, DG_universe, seed_nodes,
     Fnew = visualizations.network_propagation(G_DEG, Wprime, seed_nodes, alpha = alpha, num_its = num_its)
     top_genes = Fnew.sort_values(ascending=False)[0:num_top_genes].index
     G_top_genes = DG_universe.subgraph(top_genes)
+    
+    # keep only the largest connected component
+    G_top_genes = nx.Graph(G_top_genes)
+    if largest_connected_component:
+        G_top_genes = max(nx.connected_component_subgraphs(G_top_genes), key=len)
 
     # cluster hottest genes
-    G_top_genes = nx.Graph(G_top_genes)
     node_to_cluster = community.best_partition(G_top_genes)
 
     nodes = G_top_genes.nodes()
@@ -61,7 +67,11 @@ def draw_clustering(G_DEG, DG_universe, seed_nodes,
         edges = G_top_genes.edges()
 
     # position based on cluster
-    pos = nx.spring_layout(G_top_genes)
+    if k is None:
+        pos = nx.spring_layout(G_top_genes)
+    else:
+        pos = nx.spring_layout(G_top_genes,k=k)
+    
     if rad_positions == True:
         bias_position_by_partition(pos, node_to_cluster, r = r, x_offset = x_offset, y_offset = y_offset); # modifies pos in place
 

@@ -171,7 +171,7 @@ class Heat:
                         largest_connected_component = True,
                         physics_enabled = True,
                         node_font_size = 40,
-                **kwargs):
+                        **kwargs):
     
         # make sure user has run all prerequisites
         for item in ['DEG_list', 'G_DEG']:
@@ -195,6 +195,8 @@ class Heat:
     def draw_clustering(self,
                     rad_positions = True,
                     Wprime = None,
+                    k = None,
+                    largest_connected_component = False,
                     alpha = 0.5,
                     num_its = 20,
                     num_top_genes = 200,
@@ -221,6 +223,8 @@ class Heat:
         return heat_and_cluster.draw_clustering(self.G_DEG, self.DG_universe, seed_nodes,
                     rad_positions = rad_positions,
                     Wprime = Wprime,
+                    k = k,
+                    largest_connected_component = largest_connected_component,
                     alpha = alpha,
                     num_its = num_its,
                     num_top_genes = num_top_genes,
