@@ -7,8 +7,13 @@ Date: 6/4/18
 
 import create_graph
 import heat_and_cluster
-reload(heat_and_cluster)
 import visJS2jupyter.visualizations as visualizations # pip install visJS2jupyter
+
+#for local testing
+#import sys
+#sys.path.append('../../../visJS2jupyter/visJS2jupyter')
+#import visualizations
+#import visJS_module
 
 import networkx as nx
 
@@ -154,6 +159,17 @@ class Heat:
         self.G_DEG = G_DEG
         self.DG_universe = DG_universe
         
+    def load_ndex_from_server(self, UUID, relabel_node_field = None):
+    
+        # make sure user has run all prerequisites
+        for item in ['DEG_list', 'gene_type', 'species']:
+            if self.check_exists(item) == False:
+                return
+    
+        G_DEG, DG_universe = create_graph.load_ndex_from_server(UUID, relabel_node_field, self.DEG_list)
+        self.G_DEG = G_DEG
+        self.DG_universe = DG_universe
+        
         
 #------------------------- Heat Propagation --------------------------------#
 
@@ -181,12 +197,12 @@ class Heat:
         G_heat = nx.Graph(self.G_DEG)
         seed_nodes = [n for n in self.DEG_list if n in self.G_DEG]
         return visualizations.draw_heat_prop(G_heat, seed_nodes, 
-                                            num_nodes = 200,
-                                            edge_width = 2,
-                                            node_size_multiplier = 5,
-                                            largest_connected_component = True,
-                                            physics_enabled = True,
-                                            node_font_size = 40,
+                                            num_nodes = num_nodes,
+                                            edge_width = edge_width,
+                                            node_size_multiplier = node_size_multiplier,
+                                            largest_connected_component = largest_connected_component,
+                                            physics_enabled = physics_enabled,
+                                            node_font_size = node_font_size,
                                             **kwargs)
                                             
                                             

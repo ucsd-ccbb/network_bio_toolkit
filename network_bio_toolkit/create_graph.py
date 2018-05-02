@@ -7,7 +7,10 @@ Date: 10/13/17
 
 import pandas as pd
 import networkx as nx
-import mygene
+import mygene # pip install mygene
+import ndex2 # pip install ndex2
+from ndex2.niceCXNetwork import NiceCXNetwork
+import ndex2.client as nc
 
 
 # ----------------------------- TRANSCRIPTION FACTOR -------------------------- #
@@ -45,11 +48,11 @@ def easy_load_TF_list(csv_filename, jaspar = True, TRED = True, ITFP = True, ENC
     if (Marbach2016 == True):    
         Marbach_list = list((df2.loc[df2['Marbach2016'] == 1])['Marbach2016'].index)
         TF_list.extend(Marbach_list)
-		
-	if species == 'mouse':
-		TF_list = [x.title() for x in TF_list]
-		
-    if gene_type == 'entrez':
+        
+    if (species == 'mouse'):
+        TF_list = [x.title() for x in TF_list]
+    
+    if (gene_type == 'entrez'):
         G_entrez = translate_gene_type(TF_list, 'symbol', 'entrezgene', species = species)
         TF_list = list(G_entrez.nodes())
         
@@ -121,7 +124,7 @@ def load_STRING_to_digraph(filename, TF_list = None, confidence_filter=400, gene
     """
 
     # read STRING file to dataframe
-    df_full = pd.read_csv(filename, sep="\t")
+    df_full = pd.read_csv(filename, sep='\t')
 
     df = df_full.loc[df_full['score'] > confidence_filter]  # filter by confidence
     df_act = df.loc[df['action'] == 'activation']  # filter by activation and inhibition
@@ -179,6 +182,33 @@ def load_STRING_to_digraph(filename, TF_list = None, confidence_filter=400, gene
     DG_TF = remove_source_nodes_from_list(DG_universe, TF_list)
 
     return DG_TF, DG_universe
+    
+    
+# ex. STRING >0.7 confidence human PPI netowrk   = 275bd84e-3d18-11e8-a935-0ac135e8bacf
+#     BIOGRID human PPI network                  = 36f7d8fd-23dc-11e8-b939-0ac135e8bacf
+#     IRefIndex human                            = 2ca3bcf6-86da-11e7-a10d-0ac135e8bacf    
+def load_ndex_from_server(UUID, relabel_node_field = None, filter_list = None):
+    
+    # get nice object from server
+    niceCx_from_server = ndex2.create_nice_cx_from_server(server='public.ndexbio.org', uuid=UUID)
+    
+    # convert to networkx graph
+    G = niceCx_from_server.to_networkx()
+    G = nx.DiGraph(G)
+    
+    # rename the nodes to their gene symbol
+    if relabel_node_field != None:
+        node_id_to_name = nx.get_node_attributes(G, relabel_node_field)
+        G = nx.relabel_nodes(G, node_id_to_name)
+        # for (n,d) in G.nodes(data=True): del d[relabel_node_field] # delete the redundant field after
+
+    # no filtering
+    if filter_list == None:
+        return G
+
+    # filtered graph (say for TF's or DEG's)
+    G_filtered = remove_source_nodes_from_list(G, filter_list) # terribly named function. Actually does the opposite
+    return G_filtered, G 
 
 
 # --------------------- DEG LOAD FUNCTIONS ---------------------------#
@@ -197,7 +227,7 @@ def create_DEG_list(filename,
                     p_value_column_header=None,
                     fold_change_column_header=None,
 					
-					sep = '\t'
+					sep = '    '
                     ):
 
     """
@@ -264,7 +294,7 @@ def create_DEG_full_graph(filename,
                     gene_column_header=None,
                     p_value_column_header=None,
                     fold_change_column_header=None,
-					sep = '\t'
+					sep = '    '
                     ):
 
     DEG_full_list, DEG_to_pvalue, DEG_to_updown = create_DEG_list(filename,
