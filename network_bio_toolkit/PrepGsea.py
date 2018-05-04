@@ -289,6 +289,11 @@ class PrepGsea:
         #access the dataframe results throught res2d attribute
         return self.gs_res.res2d.head()
     
+    def load_gsea_from_file(self, filename):
+        df = pd.read_csv(filename)
+        df = df.set_index('Term')
+        self.gs_res.res2d = df
+    
     def plot_gsea(self, style_content = 'ggplot', top = 20, y = 'fdr', x = 'Term', fontsize = 8):
         gsea_results = self.gs_res.res2d
         with plt.style.context(style_content):
