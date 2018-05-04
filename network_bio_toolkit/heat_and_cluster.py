@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-def draw_clustering(G_DEG, DG_universe, seed_nodes,
+def draw_clustering(DG_universe, seed_nodes,
                     rad_positions = True,
                     Wprime = None,
                     k = None,
@@ -44,11 +44,15 @@ def draw_clustering(G_DEG, DG_universe, seed_nodes,
     
     # find hottest genes
     if Wprime is None:
-        Wprime = visualizations.normalized_adj_matrix(G_DEG)
+        Wprime = visualizations.normalized_adj_matrix(DG_universe)
     
-    Fnew = visualizations.network_propagation(G_DEG, Wprime, seed_nodes, alpha = alpha, num_its = num_its)
+ #   Fnew = visualizations.network_propagation(DG_universe, Wprime, seed_nodes, alpha = alpha, num_its = num_its)
+    Fnew = visualizations.network_propagation(nx.Graph(DG_universe), Wprime, seed_nodes)
     top_genes = Fnew.sort_values(ascending=False)[0:num_top_genes].index
-    G_top_genes = DG_universe.subgraph(top_genes)
+    G_top_genes = nx.Graph(DG_universe).subgraph(top_genes) # casting to Graph to match heat prop
+    
+    print len(G_top_genes.nodes())
+    print len(G_top_genes.edges())
     
     # keep only the largest connected component
     G_top_genes = nx.Graph(G_top_genes)

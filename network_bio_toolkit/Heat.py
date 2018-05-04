@@ -7,6 +7,7 @@ Date: 6/4/18
 
 import create_graph
 import heat_and_cluster
+reload(heat_and_cluster)
 import visJS2jupyter.visualizations as visualizations # pip install visJS2jupyter
 
 #for local testing
@@ -35,7 +36,6 @@ class Heat:
         self.gene_type = gene_type
         self.species = species
         self.DEG_list = None
-        self.G_DEG = None
         self.DG_universe = None
         
         # map string to actual instance variable
@@ -43,7 +43,6 @@ class Heat:
         self.string_to_item['gene_type'] = self.gene_type
         self.string_to_item['species'] = self.species
         self.string_to_item['DEG_list'] = self.DEG_list
-        self.string_to_item['G_DEG'] = self.G_DEG
         self.string_to_item['DG_universe'] = self.DG_universe
         
         # instanciating error message dict
@@ -55,9 +54,6 @@ class Heat:
         self.item_to_message['DEG_list'] = 'No differentially expressed gene list currently on file. Please run the following method:\n' \
                      + ' - Heat.create_DEG_list\n' \
                      + 'Or assign your own using self.DEG_list\n'
-        self.item_to_message['G_DEG'] = 'No DEG network currently on file. Please run the following method:\n' \
-                     + ' - Heat.load_STRING_to_digraph\n' \
-                     + 'Or assign your own using Heat.G_DEG\n'
         self.item_to_message['DG_universe'] = 'No background network currently on file. Please run the following method:\n' \
                      + ' - Heat.load_STRING_to_digraph\n' \
                      + 'Or assign your own using Heat.DG_universe\n'
@@ -114,7 +110,6 @@ class Heat:
         if item == 'gene_type': self.gene_type = value
         elif item == 'species': self.species = value
         elif item == 'DEG_list': self.DEG_list = value
-        elif item == 'G_DEG': self.G_DEG = value
         elif item == 'DG_universe': self.DG_universe = value
         
         else:
@@ -122,7 +117,6 @@ class Heat:
             + '- gene_type\n' \
             + '- species\n' \
             + '- DEG_list\n' \
-            + '- G_DEG\n' \
             + '- DG_universe\n\n'
 
 
@@ -151,23 +145,21 @@ class Heat:
     def load_STRING_to_digraph(self, filename, confidence_filter=400):
 
         # make sure user has run all prerequisites
-        for item in ['DEG_list', 'gene_type', 'species']:
+        for item in ['gene_type', 'species']:
             if self.check_exists(item) == False:
                 return
 
-        G_DEG, DG_universe = create_graph.load_STRING_to_digraph(filename, self.DEG_list, confidence_filter, self.gene_type, self.species)
-        self.G_DEG = G_DEG
+        DG_universe = create_graph.load_STRING_to_digraph(filename, None, confidence_filter, self.gene_type, self.species)
         self.DG_universe = DG_universe
         
     def load_ndex_from_server(self, UUID, relabel_node_field = None):
     
         # make sure user has run all prerequisites
-        for item in ['DEG_list', 'gene_type', 'species']:
+        for item in ['gene_type', 'species']:
             if self.check_exists(item) == False:
                 return
     
-        G_DEG, DG_universe = create_graph.load_ndex_from_server(UUID, relabel_node_field, self.DEG_list)
-        self.G_DEG = G_DEG
+        DG_universe = create_graph.load_ndex_from_server(UUID, relabel_node_field, None)
         self.DG_universe = DG_universe
         
         
@@ -176,8 +168,8 @@ class Heat:
     def normalized_adj_matrix(self):
     
         # make sure user has run all prerequisites
-        if self.check_exists('G_DEG') == False: return None
-        return visualizations.normalized_adj_matrix(self.G_DEG)
+        if self.check_exists('DG_universe') == False: return None
+        return visualizations.normalized_adj_matrix(self.DG_universe)
         
    
     def draw_heat_prop(self, 
@@ -190,12 +182,12 @@ class Heat:
                         **kwargs):
     
         # make sure user has run all prerequisites
-        for item in ['DEG_list', 'G_DEG']:
+        for item in ['DG_universe', 'DEG_list']:
             if self.check_exists(item) == False:
                 return
 
-        G_heat = nx.Graph(self.G_DEG)
-        seed_nodes = [n for n in self.DEG_list if n in self.G_DEG]
+        G_heat = nx.Graph(self.DG_universe)
+        seed_nodes = [n for n in self.DEG_list if n in self.DG_universe]
         return visualizations.draw_heat_prop(G_heat, seed_nodes, 
                                             num_nodes = num_nodes,
                                             edge_width = edge_width,
@@ -230,13 +222,13 @@ class Heat:
                ):
 
         # make sure user has run all prerequisites
-        for item in ['DEG_list', 'G_DEG', 'DG_universe']:
+        for item in ['DEG_list', 'DG_universe']:
             if self.check_exists(item) == False:
                 return
                 
-        seed_nodes = [n for n in self.DEG_list if n in self.G_DEG]
+        seed_nodes = [n for n in self.DEG_list if n in self.DG_universe]
 
-        return heat_and_cluster.draw_clustering(self.G_DEG, self.DG_universe, seed_nodes,
+        return heat_and_cluster.draw_clustering(self.DG_universe, seed_nodes,
                     rad_positions = rad_positions,
                     Wprime = Wprime,
                     k = k,
@@ -268,7 +260,6 @@ class Heat:
         self.string_to_item['gene_type'] = self.gene_type
         self.string_to_item['species'] = self.species
         self.string_to_item['DEG_list'] = self.DEG_list
-        self.string_to_item['G_DEG'] = self.G_DEG
         self.string_to_item['DG_universe'] = self.DG_universe
 
         try:
@@ -280,7 +271,6 @@ class Heat:
             + '- gene_type\n' \
             + '- species\n' \
             + '- DEG_list\n' \
-            + '- G_DEG\n' \
             + '- DG_universe\n\n'
             return False
         return True

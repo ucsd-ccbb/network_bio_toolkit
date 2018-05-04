@@ -139,7 +139,7 @@ class Upstream:
         for item in ['gene_type', 'species', 'TF_list', 'DG_universe', 'DG_TF', 'DEG_list', 'DEG_filename',
                      'DEG_to_pvalue', 'DEG_to_updown', 'DEG_full_graph', 'tf_target_enrichment',
                      'tf_enrichment', 'z_scores']:
-            print item + ': '
+            print (item + ': ')
             exists = self.check_exists(item)
             if exists == True:
                 print str(type(self.string_to_item[item])) + '\n'
@@ -279,7 +279,7 @@ class Upstream:
                         gene_column_header=None,
                         p_value_column_header=None,
                         fold_change_column_header=None,
-						sep = '\t'):
+						sep = '    '):
 
         # make sure user has run all prerequisites
         for item in ['DG_TF', 'gene_type', 'species']:

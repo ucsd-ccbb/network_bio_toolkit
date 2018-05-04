@@ -50,7 +50,7 @@ def easy_load_TF_list(csv_filename, jaspar = True, TRED = True, ITFP = True, ENC
         TF_list.extend(Marbach_list)
         
     if (species == 'mouse'):
-        TF_list = [x.title() for x in TF_list]
+        TF_list = [x.capitalize() for x in TF_list]
     
     if (gene_type == 'entrez'):
         G_entrez = translate_gene_type(TF_list, 'symbol', 'entrezgene', species = species)
@@ -98,7 +98,7 @@ def load_small_STRING_to_digraph(filename, TF_list = []):
     DG_universe = nx.from_pandas_dataframe(STRING_DF, 'source', 'target', ['sign', 'weight'], create_using=nx.DiGraph())
 
     # filtered graph
-    DG_TF = remove_source_nodes_from_list(DG_universe, TF_list)
+    DG_TF = keep_list_and_neighbors(DG_universe, TF_list)
 
     return DG_TF, DG_universe
 
@@ -179,7 +179,7 @@ def load_STRING_to_digraph(filename, TF_list = None, confidence_filter=400, gene
         return DG_universe
 
     # filtered graph
-    DG_TF = remove_source_nodes_from_list(DG_universe, TF_list)
+    DG_TF = keep_list_and_neighbors(DG_universe, TF_list)
 
     return DG_TF, DG_universe
     
@@ -194,7 +194,6 @@ def load_ndex_from_server(UUID, relabel_node_field = None, filter_list = None):
     
     # convert to networkx graph
     G = niceCx_from_server.to_networkx()
-    G = nx.DiGraph(G)
     
     # rename the nodes to their gene symbol
     if relabel_node_field != None:
@@ -207,7 +206,7 @@ def load_ndex_from_server(UUID, relabel_node_field = None, filter_list = None):
         return G
 
     # filtered graph (say for TF's or DEG's)
-    G_filtered = remove_source_nodes_from_list(G, filter_list) # terribly named function. Actually does the opposite
+    G_filtered = keep_list_and_neighbors(G, filter_list) # terribly named function. Actually does the opposite
     return G_filtered, G 
 
 
@@ -343,30 +342,37 @@ def translate_gene_type(to_translate, before_gene_type, after_gene_type, G = Non
     G_after.remove_node('None')
     return G_after
 
-
-def remove_source_nodes_from_list(G, TF_list):
+    
+def keep_list_and_neighbors(G, filter_list):
 
     """
-        This is a helper function that removes all source nodes from graph G that are not in TF_list. The original
+        This is a helper function that removes all source nodes from graph G that are not in filter_list. The original
         graph is not modified.
 
         Args:
             G: The NetworkX graph to filter
-            TF_list: the source nodes to keep
+            filter_list: the source nodes to keep
 
         Returns: A Networkx graph representation of the STRING database file
 
     """
-
-    if ((str(type(G)) == '<class \'networkx.classes.multidigraph.MultiDiGraph\'>') | (
-                str(type(G)) == '<class \'networkx.classes.multigraph.MultiGraph\'>')):
-        edges = G.out_edges(TF_list,keys = True, data = True)
-        DG = nx.MultiDiGraph()
-        DG.add_edges_from(edges)
-    else:
+    
+    if type(G) == nx.classes.digraph.DiGraph:
         edges = G.out_edges(TF_list, data=True)
         DG = nx.DiGraph()
         DG.add_edges_from(edges)
+        
+    elif type(G) == nx.classes.multidigraph.MultiDiGraph:
+        edges = G.out_edges(filter_list, keys = True, data = True)
+        DG = nx.MultiDiGraph()
+        DG.add_edges_from(edges)
+        
+    else:
+        edges_to_keep = []
+        [edges_to_keep.extend(nx.neighbors(G, n)) for n in filter_list]
+        edges_to_keep.extend(filter_list)
+        edges_to_keep = list(set(edges_to_keep))
+        DG = G.subgraph(edges_to_keep)
 
     return DG
 
