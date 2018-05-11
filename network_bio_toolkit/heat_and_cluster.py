@@ -1,7 +1,8 @@
 """
 -------------------------------------------
-Author: Mikayla Webster (13webstermj@gmail.com)
-Date: 6/4/18
+Authors: Mikayla Webster (13webstermj@gmail.com)
+         Brin Rosenthal (sbrosenthal@ucsd.edu)
+Date: 4/6/18
 -------------------------------------------
 """
 
@@ -22,6 +23,7 @@ import numpy as np
 import pandas as pd
 
 def draw_clustering(DG_universe, seed_nodes,
+                    color_lfc = False,
                     rad_positions = True,
                     Wprime = None,
                     k = None,
@@ -39,6 +41,15 @@ def draw_clustering(DG_universe, seed_nodes,
                     physics_enabled = False,
                     node_font_size = 40,
                     graph_id = 3,
+                    color_map = plt.cm.bwr,
+                    alpha_lfc = 1.0, 
+				    color_vals_transform = None,
+				    ceil_val=10,
+                    color_max_frac = 1.0,
+				    color_min_frac = 0.0,
+                    DEG_to_updown = None,
+				    vmin=None,
+				    vmax=None,
                     **kwargs
                    ):
     
@@ -51,9 +62,6 @@ def draw_clustering(DG_universe, seed_nodes,
     top_genes = Fnew.sort_values(ascending=False)[0:num_top_genes].index
     G_top_genes = nx.Graph(DG_universe).subgraph(top_genes) # casting to Graph to match heat prop
     
-    print len(G_top_genes.nodes())
-    print len(G_top_genes.edges())
-    
     # keep only the largest connected component
     G_top_genes = nx.Graph(G_top_genes)
     if largest_connected_component:
@@ -64,9 +72,28 @@ def draw_clustering(DG_universe, seed_nodes,
 
     nodes = G_top_genes.nodes()
     edges = G_top_genes.edges()
+    
+    # qucik args check
+    if DEG_to_updown == None:
+        color_lfc = False
 
-    # color based on cluster
-    node_to_color = assign_colors_to_clusters(node_to_cluster, cluster_size_cut_off)
+    # color based on fold change
+    if color_lfc == True:
+        # define node colors
+        node_to_fld = {n: DEG_to_updown[n] for n in nodes if n in DEG_to_updown} # keep only those in graph G
+        nx.set_node_attributes(G_top_genes, 'fold_change', 0) # give all nodes a default fold change of zero
+        nx.set_node_attributes(G_top_genes, 'fold_change', node_to_fld) # overwrite with actual fold change for the nodes that have one
+        node_to_color = visJS_module.return_node_to_color(G_top_genes, field_to_map = 'fold_change', 
+                                                            cmap = color_map, 
+                                                            alpha = alpha_lfc, 
+                                                            color_vals_transform = color_vals_transform,
+                                                            ceil_val = ceil_val,
+                                                            color_max_frac = color_max_frac,
+                                                            color_min_frac = color_min_frac,
+                                                            vmin = vmin,
+                                                            vmax = vmax)
+    else: # color based on cluster
+        node_to_color = assign_colors_to_clusters(node_to_cluster, cluster_size_cut_off)
 
     # remove stray nodes
     if remove_stray_nodes == True:
@@ -163,7 +190,7 @@ def assign_colors_to_clusters(node_to_cluster, cluster_size_cut_off = 20, color_
     
     cluster_to_color = {}
     color_index = 0
-    for cluster_id, node_list in cluster_to_nodes.iteritems():
+    for cluster_id, node_list in cluster_to_nodes.items():
         if len(node_list) < cluster_size_cut_off:
             cluster_to_color[cluster_id] = 'grey'
         else:
@@ -171,14 +198,14 @@ def assign_colors_to_clusters(node_to_cluster, cluster_size_cut_off = 20, color_
             if color_index < len(color_list)-1:
                 color_index = color_index + 1
 
-    for node, cluster_id in node_to_cluster.iteritems():
+    for node, cluster_id in node_to_cluster.items():
         node_to_color[node] = cluster_to_color[cluster_id]
     
     return node_to_color
 
 def invert_dict(old_dict):
     inv_dict = {}
-    for k, v in old_dict.iteritems():
+    for k, v in old_dict.items():
         inv_dict [v] = inv_dict.get(v, [])
         inv_dict [v].append(k)
     return inv_dict 

@@ -1,13 +1,12 @@
 """
 -------------------------------------------
 Author: Mikayla Webster (13webstermj@gmail.com)
-Date: 6/4/18
+Date: 4/6/18
 -------------------------------------------
 """
 
 import create_graph
 import heat_and_cluster
-reload(heat_and_cluster)
 import visJS2jupyter.visualizations as visualizations # pip install visJS2jupyter
 
 #for local testing
@@ -36,14 +35,18 @@ class Heat:
         self.gene_type = gene_type
         self.species = species
         self.DEG_list = None
+        self.DEG_to_updown = None
         self.DG_universe = None
+        self.Wprime = None
         
         # map string to actual instance variable
         self.string_to_item = {}
         self.string_to_item['gene_type'] = self.gene_type
         self.string_to_item['species'] = self.species
         self.string_to_item['DEG_list'] = self.DEG_list
+        self.string_to_item['DEG_to_updown'] = self.DEG_to_updown
         self.string_to_item['DG_universe'] = self.DG_universe
+        self.string_to_item['Wprime'] = self.Wprime
         
         # instanciating error message dict
         self.item_to_message = {}
@@ -52,12 +55,17 @@ class Heat:
         self.item_to_message['species'] = 'No species declaration currently on file. Please create a new instance of Heat using ' \
                      + 'Heat(gene_type, species)'
         self.item_to_message['DEG_list'] = 'No differentially expressed gene list currently on file. Please run the following method:\n' \
-                     + ' - Heat.create_DEG_list\n' \
-                     + 'Or assign your own using self.DEG_list\n'
+                     + ' - Heat_instance.create_DEG_list\n' \
+                     + 'Or assign your own using Heat_instance.DEG_list\n'
+        self.item_to_message['DEG_to_updown'] = 'No fold change information currently on file. Please run the following method:\n' \
+                     + ' - Heat_instance.create_DEG_list\n' \
+                     + 'Or assign your own using Heat_instance.DEG_to_updown\n'
         self.item_to_message['DG_universe'] = 'No background network currently on file. Please run the following method:\n' \
-                     + ' - Heat.load_STRING_to_digraph\n' \
-                     + 'Or assign your own using Heat.DG_universe\n'
-  
+                     + ' - Heat_instance.load_STRING_to_digraph\n' \
+                     + 'Or assign your own using Heat_instance.DG_universe\n'
+        self.item_to_message['Wprime'] = 'No adjacency matrix currently on file. Please run the following method:\n' \
+                     + ' - Heat_instance.normalized_adj_matrix()\n' \
+                     + 'Or assign your own using Heat_instance.Wprime\n'
 
             
 # ----------------------------- GETTERS AND SETTERS -------------------------- #
@@ -110,14 +118,18 @@ class Heat:
         if item == 'gene_type': self.gene_type = value
         elif item == 'species': self.species = value
         elif item == 'DEG_list': self.DEG_list = value
+        elif item == 'DEG_to_updown': self.DEG_to_updown = value
         elif item == 'DG_universe': self.DG_universe = value
+        elif item == 'Wprime': self.Wprime = value
         
         else:
-            print 'The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
+            print ('The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
             + '- gene_type\n' \
             + '- species\n' \
             + '- DEG_list\n' \
-            + '- DG_universe\n\n'
+            + '- DEG_to_updown\n' \
+            + '- DG_universe\n' \
+            + '- Wprime\n\n')
 
 
 #----------------------- LOAD NETWORK FUNCTIONS ---------------------------------#
@@ -140,6 +152,7 @@ class Heat:
         DEG_list, DEG_to_pvalue, DEG_to_updown = create_graph.create_DEG_list(filename, None, p_value_filter, p_value_or_adj,
                 fold_change_filter, self.gene_type, gene_column_header, p_value_column_header, fold_change_column_header, sep)
         self.DEG_list = DEG_list
+        self.DEG_to_updown = DEG_to_updown
         
         
     def load_STRING_to_digraph(self, filename, confidence_filter=400):
@@ -162,6 +175,16 @@ class Heat:
         DG_universe = create_graph.load_ndex_from_server(UUID, relabel_node_field, None)
         self.DG_universe = DG_universe
         
+    def load_STRING_links(self, filename, confidence_filter = 700):
+    
+        # make sure user has run all prerequisites
+        for item in ['gene_type', 'species']:
+            if self.check_exists(item) == False:
+                return
+    
+        # load STRING
+        self.DG_universe = create_graph.load_STRING_links(filename, confidence_filter, self.species, self.gene_type)
+        
         
 #------------------------- Heat Propagation --------------------------------#
 
@@ -169,7 +192,7 @@ class Heat:
     
         # make sure user has run all prerequisites
         if self.check_exists('DG_universe') == False: return None
-        return visualizations.normalized_adj_matrix(self.DG_universe)
+        self.Wprime = visualizations.normalized_adj_matrix(nx.Graph(self.DG_universe))
         
    
     def draw_heat_prop(self, 
@@ -182,14 +205,17 @@ class Heat:
                         **kwargs):
     
         # make sure user has run all prerequisites
-        for item in ['DG_universe', 'DEG_list']:
+        for item in ['DG_universe', 'DEG_list', 'Wprime']:
             if self.check_exists(item) == False:
                 return
 
         G_heat = nx.Graph(self.DG_universe)
         seed_nodes = [n for n in self.DEG_list if n in self.DG_universe]
-        return visualizations.draw_heat_prop(G_heat, seed_nodes, 
+        
+        return visualizations.draw_heat_prop(G_heat, seed_nodes,
+                                            Wprime = self.Wprime,
                                             num_nodes = num_nodes,
+                                            highlight_nodes = seed_nodes,
                                             edge_width = edge_width,
                                             node_size_multiplier = node_size_multiplier,
                                             largest_connected_component = largest_connected_component,
@@ -202,7 +228,6 @@ class Heat:
 
     def draw_clustering(self,
                     rad_positions = True,
-                    Wprime = None,
                     k = None,
                     largest_connected_component = False,
                     alpha = 0.5,
@@ -222,7 +247,7 @@ class Heat:
                ):
 
         # make sure user has run all prerequisites
-        for item in ['DEG_list', 'DG_universe']:
+        for item in ['DEG_list', 'DG_universe', 'Wprime']:
             if self.check_exists(item) == False:
                 return
                 
@@ -230,7 +255,7 @@ class Heat:
 
         return heat_and_cluster.draw_clustering(self.DG_universe, seed_nodes,
                     rad_positions = rad_positions,
-                    Wprime = Wprime,
+                    Wprime = self.Wprime,
                     k = k,
                     largest_connected_component = largest_connected_component,
                     alpha = alpha,
@@ -246,6 +271,7 @@ class Heat:
                     physics_enabled = physics_enabled,
                     node_font_size = node_font_size,
                     graph_id = graph_id,
+                    DEG_to_updown = self.DEG_to_updown,
                     **kwargs
                     )
         
@@ -260,17 +286,21 @@ class Heat:
         self.string_to_item['gene_type'] = self.gene_type
         self.string_to_item['species'] = self.species
         self.string_to_item['DEG_list'] = self.DEG_list
+        self.string_to_item['DEG_to_updown'] = self.DEG_to_updown
         self.string_to_item['DG_universe'] = self.DG_universe
+        self.string_to_item['Wprime'] = self.Wprime
 
         try:
             if (type(self.string_to_item[item]) == type(None)):
-                print self.item_to_message[item]
+                print(self.item_to_message[item])
                 return False
         except:
-            print 'The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
+            print('The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
             + '- gene_type\n' \
             + '- species\n' \
             + '- DEG_list\n' \
-            + '- DG_universe\n\n'
+            + '- DEG_to_updown\n' \
+            + '- DG_universe\n' \
+            + '- Wprime\n\n')
             return False
         return True
