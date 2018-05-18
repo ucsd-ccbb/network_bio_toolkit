@@ -16,6 +16,7 @@ import visJS2jupyter.visualizations as visualizations # pip install visJS2jupyte
 #import visJS_module
 
 import networkx as nx
+import pandas as pd
 
 class Heat:
 
@@ -274,10 +275,13 @@ class Heat:
                     DEG_to_updown = self.DEG_to_updown,
                     **kwargs
                     )
-        
+                    
+                    
+
 
 #------------------ HELPER FUNCTIONS ------------------------------------#  
 
+ 
     # item must be string version
     def check_exists(self, item):
 
