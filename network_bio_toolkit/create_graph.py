@@ -1,6 +1,7 @@
 """
 -------------------------------------------
 Author: Mikayla Webster (13webstermj@gmail.com)
+        Brin Rosenthal (sbrosenthal@ucsd.edu)
 Date: 10/13/17
 -------------------------------------------
 """
@@ -103,7 +104,7 @@ def load_small_STRING_to_digraph(filename, TF_list = []):
     return DG_TF, DG_universe
 
 
-
+# Use with STRING protein.actions files. This function is pretty exclusively for URA
 def load_STRING_to_digraph(filename, TF_list = None, confidence_filter=400, gene_type = "symbol", species = 'human'):
 
     """
@@ -209,6 +210,32 @@ def load_ndex_from_server(UUID, relabel_node_field = None, filter_list = None):
     G_filtered = keep_list_and_neighbors(G, filter_list) # terribly named function. Actually does the opposite
     return G_filtered, G 
 
+    
+    
+# use with STRING protein.links files  
+def load_STRING_links(datafile, conf_thresh = 700, species = 'human', translate_to = 'symbol'):
+    '''
+    Helper function to parse and load STRING network
+    
+    '''
+    # parse and load STRING protein links file
+    string_df = pd.read_csv(datafile, sep = ' ')
+    string_df = string_df.loc[string_df['combined_score'] > conf_thresh]
+                              
+    # create the network
+    G_str = nx.Graph()
+    G_str.add_weighted_edges_from(zip(string_df['protein1'], string_df['protein2'], string_df['combined_score']))
+    
+    # extract list of ensemble gene names
+    to_translate = [n[n.find('.') + 1:] for n in G_str.nodes()]
+    G_str = nx.relabel_nodes(G_str, dict(zip(G_str.nodes(), to_translate)))
+
+    # do the translation and relabeling using mygene
+    G_str = translate_gene_type(to_translate, 'ensemblprotein', translate_to, G_str, species)
+    return G_str
+    
+    
+    
 
 # --------------------- DEG LOAD FUNCTIONS ---------------------------#
 
@@ -339,7 +366,8 @@ def translate_gene_type(to_translate, before_gene_type, after_gene_type, G = Non
         G_before = G
 
     G_after = nx.relabel_nodes(G_before, before_to_after)  # only keep the proteins that
-    G_after.remove_node('None')
+    if 'None' in G_after.nodes():
+        G_after.remove_node('None')
     return G_after
 
     
@@ -426,7 +454,7 @@ def try_message(df, header, message):
     try:
         df[header]
     except:
-        print message
+        print(message)
         return -1
     return header
 
@@ -453,8 +481,8 @@ def check_gene_header(df, gene_column_header, gene_type):
                 return header
 
         if gene_column_header == None:  # if we did not find a matching header
-            print 'We could not find a gene column header in your file.'
-            print 'Please specify one with parameter \'gene_column_header\'.\n'
+            print('We could not find a gene column header in your file.')
+            print('Please specify one with parameter \'gene_column_header\'.\n')
             return -1
 
 
@@ -475,15 +503,15 @@ def check_p_value_header(df, p_value_column_header, p_value_or_adj):
             common_p_value_headers = ['P.Value', 'pvalue', 'PVALUE', 'p-value', 'P-VALUE',
                                       'p.value', 'P.VALUE', 'pval', 'PVAL', 'p_val', 'P_VAL']
         else:
-            print '\"p_value_or_adj\" argument can be only \'adj\' or \'p\'. It is currently set to \'' + p_value_or_adj + '\'.\n'
+            print('\"p_value_or_adj\" argument can be only \'adj\' or \'p\'. It is currently set to \'' + p_value_or_adj + '\'.\n')
 
         for header in common_p_value_headers:
             if try_or(df, header) == 1:  # if we find a matching header
                 return header
 
         if p_value_column_header == None:  # if we did not find a matching header
-            print 'We could not find a p-value column header in your file.'
-            print 'Please specify one with parameter \'p_value_column_header\'.\n'
+            print('We could not find a p-value column header in your file.')
+            print('Please specify one with parameter \'p_value_column_header\'.\n')
             return -1
 
 
@@ -510,8 +538,8 @@ def check_fold_change_header(df, fold_change_column_header):
                 return header
 
         if fold_change_column_header == None:  # if we did not find a matching header
-            print 'We could not find a fold change column header in your file.'
-            print 'Please specify one with parameter \'fold_change_column_header\'.\n'
+            print('We could not find a fold change column header in your file.')
+            print('Please specify one with parameter \'fold_change_column_header\'.\n')
             return -1
 
 
