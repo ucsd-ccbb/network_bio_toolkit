@@ -25,10 +25,8 @@ class PrepGsea:
         self.meta_file = meta_file
         self.output_dir = output_dir
         
-        # check that these files exist
-        if os.path.isfile(gmt_file) == False:
-            print 'gmt_file does not exist'
-            return
+        # check that these files exist (don't need a gmt file if loading from file)
+        
         if os.path.isfile(expression_file) == False:
             print 'expression_file does not exist'
             return

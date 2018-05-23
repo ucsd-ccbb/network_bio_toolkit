@@ -105,7 +105,7 @@ def load_small_STRING_to_digraph(filename, TF_list = []):
 
 
 # Use with STRING protein.actions files. This function is pretty exclusively for URA
-def load_STRING_to_digraph(filename, TF_list = None, confidence_filter=400, gene_type = "symbol", species = 'human'):
+def load_STRING_to_digraph(filename, TF_list = None, confidence_filter = 700, gene_type = "symbol", species = 'human'):
 
     """
         This function loads a subset of the STRING database from the file "9606.protein.actions.v10.5.txt"
@@ -200,7 +200,7 @@ def load_ndex_from_server(UUID, relabel_node_field = None, filter_list = None):
     if relabel_node_field != None:
         node_id_to_name = nx.get_node_attributes(G, relabel_node_field)
         G = nx.relabel_nodes(G, node_id_to_name)
-        # for (n,d) in G.nodes(data=True): del d[relabel_node_field] # delete the redundant field after
+        #for (n,d) in G.nodes(data = True): del d[relabel_node_field] # delete the redundant field after
 
     # no filtering
     if filter_list == None:
@@ -241,19 +241,16 @@ def load_STRING_links(datafile, conf_thresh = 700, species = 'human', translate_
 
 
 def create_DEG_list(filename,
-                    G=None,  # specify in order to add up-down info to graph
-
-                    p_value_filter=0.05,
-                    p_value_or_adj='adj',  # filtering by p-value ('p') or adjusted p-value ('adj')
-
-                    fold_change_filter=None,  # specify a number to filter by absolute (log) fold change
-                    gene_type='symbol',  # 'symbol' or 'entrez'
-
-                    gene_column_header=None,
-                    p_value_column_header=None,
-                    fold_change_column_header=None,
-					
-					sep = '    '
+                    G = None,  # specify in order to add up-down info to graph
+                    p_value_filter = 0.05,
+                    p_value_or_adj = 'adj',  # filtering by p-value ('p') or adjusted p-value ('adj')
+                    fold_change_filter = None,  # specify a number to filter by absolute (log) fold change
+                    gene_type = 'symbol',  # 'symbol' or 'entrez'
+                    gene_column_header = None,
+                    p_value_column_header = None,
+                    fold_change_column_header = None,
+					sep = '    ',
+                    return_entire_lf = False
                     ):
 
     """
@@ -274,7 +271,7 @@ def create_DEG_list(filename,
 
     """
 
-    df = pd.DataFrame.from_csv(filename, sep=sep)
+    df = pd.DataFrame.from_csv(filename, sep = sep)
 
     # check to make sure we know which column headers to use
     gene_column_header = check_gene_header(df, gene_column_header, gene_type)
@@ -288,6 +285,10 @@ def create_DEG_list(filename,
 
     # remove duplicate lines for same gene symbol, just use first occurance
     df.drop_duplicates(subset=[gene_column_header], keep='first', inplace=True)
+    
+    # save (log) fold change of entire graph, not just DEG's
+    if return_entire_lf == True:
+        gene_to_lfc = dict(zip(df[gene_column_header], df[fold_change_column_header]))
 
     # filter by p-value cut-off
     df = df.loc[df[p_value_column_header] < p_value_filter]
@@ -309,8 +310,11 @@ def create_DEG_list(filename,
     if G != None:
         DG = add_node_attribute_from_dict(G, DEG_to_updown, attribute='updown')
         return DEG_list, DG
-
-    return DEG_list, DEG_to_pvalue, DEG_to_updown
+        
+    if return_entire_lf == True:
+        return DEG_list, DEG_to_pvalue, gene_to_lfc
+    else:
+        return DEG_list, DEG_to_pvalue, DEG_to_updown
 
 
 

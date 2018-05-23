@@ -40,7 +40,7 @@ class Heat:
         self.gene_type = gene_type
         self.species = species
         self.DEG_list = None
-        self.DEG_to_updown = None
+        self.return_entire_lf = None
         self.DG_universe = None
         self.Wprime = None
         
@@ -49,7 +49,7 @@ class Heat:
         self.string_to_item['gene_type'] = self.gene_type
         self.string_to_item['species'] = self.species
         self.string_to_item['DEG_list'] = self.DEG_list
-        self.string_to_item['DEG_to_updown'] = self.DEG_to_updown
+        self.string_to_item['return_entire_lf'] = self.return_entire_lf
         self.string_to_item['DG_universe'] = self.DG_universe
         self.string_to_item['Wprime'] = self.Wprime
         
@@ -62,9 +62,9 @@ class Heat:
         self.item_to_message['DEG_list'] = 'No differentially expressed gene list currently on file. Please run the following method:\n' \
                      + ' - Heat_instance.create_DEG_list\n' \
                      + 'Or assign your own using Heat_instance.DEG_list\n'
-        self.item_to_message['DEG_to_updown'] = 'No fold change information currently on file. Please run the following method:\n' \
+        self.item_to_message['return_entire_lf'] = 'No fold change information currently on file. Please run the following method:\n' \
                      + ' - Heat_instance.create_DEG_list\n' \
-                     + 'Or assign your own using Heat_instance.DEG_to_updown\n'
+                     + 'Or assign your own using Heat_instance.return_entire_lf\n'
         self.item_to_message['DG_universe'] = 'No background network currently on file. Please run the following method:\n' \
                      + ' - Heat_instance.load_STRING_to_digraph\n' \
                      + 'Or assign your own using Heat_instance.DG_universe\n'
@@ -123,7 +123,7 @@ class Heat:
         if item == 'gene_type': self.gene_type = value
         elif item == 'species': self.species = value
         elif item == 'DEG_list': self.DEG_list = value
-        elif item == 'DEG_to_updown': self.DEG_to_updown = value
+        elif item == 'return_entire_lf': self.return_entire_lf = value
         elif item == 'DG_universe': self.DG_universe = value
         elif item == 'Wprime': self.Wprime = value
         
@@ -132,7 +132,7 @@ class Heat:
             + '- gene_type\n' \
             + '- species\n' \
             + '- DEG_list\n' \
-            + '- DEG_to_updown\n' \
+            + '- return_entire_lf\n' \
             + '- DG_universe\n' \
             + '- Wprime\n\n')
 
@@ -154,10 +154,11 @@ class Heat:
                 return
 
         # create the DEG list with specified cut-offs
-        DEG_list, DEG_to_pvalue, DEG_to_updown = create_graph.create_DEG_list(filename, None, p_value_filter, p_value_or_adj,
-                fold_change_filter, self.gene_type, gene_column_header, p_value_column_header, fold_change_column_header, sep)
+        DEG_list, DEG_to_pvalue, return_entire_lf = create_graph.create_DEG_list(filename, None, p_value_filter, p_value_or_adj,
+                fold_change_filter, self.gene_type, gene_column_header, p_value_column_header, fold_change_column_header, sep,
+                return_entire_lf = True)
         self.DEG_list = DEG_list
-        self.DEG_to_updown = DEG_to_updown
+        self.return_entire_lf = return_entire_lf
         
         
     def load_STRING_to_digraph(self, filename, confidence_filter=400):
@@ -276,7 +277,7 @@ class Heat:
                     physics_enabled = physics_enabled,
                     node_font_size = node_font_size,
                     graph_id = graph_id,
-                    DEG_to_updown = self.DEG_to_updown,
+                    return_entire_lf = self.return_entire_lf,
                     **kwargs
                     )
                     
@@ -307,7 +308,7 @@ class Heat:
                         **kwargs):
                         
         # make sure user has run all prerequisites
-        for item in ['DEG_list', 'DG_universe', 'Wprime', 'DEG_to_updown']:
+        for item in ['DEG_list', 'DG_universe', 'Wprime', 'return_entire_lf']:
             if self.check_exists(item) == False:
                 return
         
@@ -349,7 +350,7 @@ class Heat:
         # color based on fold change
         if color_lfc == True:
             # define node colors
-            node_to_fld = {n: self.DEG_to_updown[n] for n in nodes if n in self.DEG_to_updown} # keep only those in graph G
+            node_to_fld = {n: self.return_entire_lf[n] for n in nodes if n in self.return_entire_lf} # keep only those in graph G
             nx.set_node_attributes(G_top_genes, 'fold_change', 0) # give all nodes a default fold change of zero
             nx.set_node_attributes(G_top_genes, 'fold_change', node_to_fld) # overwrite with actual fold change for the nodes that have one
             node_to_color = visJS_module.return_node_to_color(G_top_genes, field_to_map = 'fold_change', 
@@ -451,7 +452,11 @@ class Heat:
             
             print('Annotating cluster ' + str(cluster_id) + ' of ' + str(top) + '...')
             
-            df = pd.DataFrame(gp.gprofile(group, organism = 'mmusculus', custom_bg = top_nodes))
+            if self.species == 'human':
+                org = 'hsapiens'
+            else:
+                org = 'mmusculus'
+            df = pd.DataFrame(gp.gprofile(group, organism = org, custom_bg = top_nodes))
             df.columns = df.loc[0]
             df.drop(0)
             annotation = df['t name'][1]
@@ -471,7 +476,7 @@ class Heat:
         self.string_to_item['gene_type'] = self.gene_type
         self.string_to_item['species'] = self.species
         self.string_to_item['DEG_list'] = self.DEG_list
-        self.string_to_item['DEG_to_updown'] = self.DEG_to_updown
+        self.string_to_item['return_entire_lf'] = self.return_entire_lf
         self.string_to_item['DG_universe'] = self.DG_universe
         self.string_to_item['Wprime'] = self.Wprime
 
@@ -484,7 +489,7 @@ class Heat:
             + '- gene_type\n' \
             + '- species\n' \
             + '- DEG_list\n' \
-            + '- DEG_to_updown\n' \
+            + '- return_entire_lf\n' \
             + '- DG_universe\n' \
             + '- Wprime\n\n')
             return False
