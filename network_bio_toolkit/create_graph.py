@@ -250,7 +250,7 @@ def create_DEG_list(filename,
                     p_value_column_header = None,
                     fold_change_column_header = None,
 					sep = '    ',
-                    return_entire_lf = False
+                    return_full_values = False
                     ):
 
     """
@@ -286,9 +286,10 @@ def create_DEG_list(filename,
     # remove duplicate lines for same gene symbol, just use first occurance
     df.drop_duplicates(subset=[gene_column_header], keep='first', inplace=True)
     
-    # save (log) fold change of entire graph, not just DEG's
-    if return_entire_lf == True:
+    # save (log) fold change and p-value of entire graph, not just DEG's
+    if return_full_values == True:
         gene_to_lfc = dict(zip(df[gene_column_header], df[fold_change_column_header]))
+        gene_to_pvalue = dict(zip(df[gene_column_header], df[p_value_column_header]))
 
     # filter by p-value cut-off
     df = df.loc[df[p_value_column_header] < p_value_filter]
@@ -303,18 +304,20 @@ def create_DEG_list(filename,
     if (type(DEG_list[0]) != str):
         DEG_list_temp = [str(int(x)) for x in DEG_list if (str(x) != 'nan')]
         DEG_list = DEG_list_temp
+        
+    # return early, because we don't want to filter down the pvalues and lfc 
+    if return_full_values == True:
+        return DEG_list, gene_to_pvalue, gene_to_lfc
 
     DEG_to_pvalue = dict(zip(DEG_list, df[p_value_column_header]))
     DEG_to_updown = dict(zip(DEG_list, df[fold_change_column_header]))
 
+    # if a graph is provided, then add attribute to grpah rather than return as a dict
     if G != None:
-        DG = add_node_attribute_from_dict(G, DEG_to_updown, attribute='updown')
+        DG = add_node_attribute_from_dict(G, DEG_to_updown, attribute = 'updown')
         return DEG_list, DG
-        
-    if return_entire_lf == True:
-        return DEG_list, DEG_to_pvalue, gene_to_lfc
-    else:
-        return DEG_list, DEG_to_pvalue, DEG_to_updown
+    
+    return DEG_list, DEG_to_pvalue, DEG_to_updown
 
 
 

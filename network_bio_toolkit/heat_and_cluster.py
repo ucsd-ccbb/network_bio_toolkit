@@ -47,7 +47,7 @@ def draw_clustering(DG_universe, seed_nodes,
 				    ceil_val=10,
                     color_max_frac = 1.0,
 				    color_min_frac = 0.0,
-                    return_entire_lf = None,
+                    node_to_lfc = None,
 				    vmin = None,
 				    vmax = None,
                     **kwargs
@@ -74,13 +74,13 @@ def draw_clustering(DG_universe, seed_nodes,
     edges = G_top_genes.edges()
     
     # qucik args check
-    if return_entire_lf == None:
+    if node_to_lfc == None:
         color_lfc = False
 
     # color based on fold change
     if color_lfc == True:
         # define node colors
-        node_to_fld = {n: return_entire_lf[n] for n in nodes if n in return_entire_lf} # keep only those in graph G
+        node_to_fld = {n: node_to_lfc[n] for n in nodes if n in node_to_lfc} # keep only those in graph G
         nx.set_node_attributes(G_top_genes, 'fold_change', 0) # give all nodes a default fold change of zero
         nx.set_node_attributes(G_top_genes, 'fold_change', node_to_fld) # overwrite with actual fold change for the nodes that have one
         node_to_color = visJS_module.return_node_to_color(G_top_genes, field_to_map = 'fold_change', 

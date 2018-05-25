@@ -12,6 +12,10 @@ import visJS2jupyter.visJS_module as visJS_module
 import community # pip install python-louvain
 from gprofiler import GProfiler # pip install gprofiler-official
 
+import importlib
+importlib.reload(create_graph)
+importlib.reload(heat_and_cluster)
+
 #for local testing
 #import sys
 #sys.path.append('../../../visJS2jupyter/visJS2jupyter')
@@ -40,18 +44,24 @@ class Heat:
         self.gene_type = gene_type
         self.species = species
         self.DEG_list = None
-        self.return_entire_lf = None
+        self.node_to_lfc = None
+        self.node_to_pvalue = None
         self.DG_universe = None
         self.Wprime = None
+        self.node_to_cluster = None
+        self.cluster_to_annotation = None
         
         # map string to actual instance variable
         self.string_to_item = {}
         self.string_to_item['gene_type'] = self.gene_type
         self.string_to_item['species'] = self.species
         self.string_to_item['DEG_list'] = self.DEG_list
-        self.string_to_item['return_entire_lf'] = self.return_entire_lf
+        self.string_to_item['node_to_lfc'] = self.node_to_lfc
+        self.string_to_item['node_to_pvalue'] = self.node_to_pvalue
         self.string_to_item['DG_universe'] = self.DG_universe
         self.string_to_item['Wprime'] = self.Wprime
+        self.string_to_item['node_to_cluster'] = self.node_to_cluster
+        self.string_to_item['cluster_to_annotation'] = self.cluster_to_annotation
         
         # instanciating error message dict
         self.item_to_message = {}
@@ -62,15 +72,24 @@ class Heat:
         self.item_to_message['DEG_list'] = 'No differentially expressed gene list currently on file. Please run the following method:\n' \
                      + ' - Heat_instance.create_DEG_list\n' \
                      + 'Or assign your own using Heat_instance.DEG_list\n'
-        self.item_to_message['return_entire_lf'] = 'No fold change information currently on file. Please run the following method:\n' \
+        self.item_to_message['node_to_lfc'] = 'No fold change information currently on file. Please run the following method:\n' \
                      + ' - Heat_instance.create_DEG_list\n' \
-                     + 'Or assign your own using Heat_instance.return_entire_lf\n'
+                     + 'Or assign your own using Heat_instance.node_to_lfc\n'
+        self.item_to_message['node_to_pvalue'] = 'No p-value information currently on file. Please run the following method:\n' \
+                     + ' - Heat_instance.create_DEG_list\n' \
+                     + 'Or assign your own using Heat_instance.node_to_pvalue\n'
         self.item_to_message['DG_universe'] = 'No background network currently on file. Please run the following method:\n' \
                      + ' - Heat_instance.load_STRING_to_digraph\n' \
                      + 'Or assign your own using Heat_instance.DG_universe\n'
         self.item_to_message['Wprime'] = 'No adjacency matrix currently on file. Please run the following method:\n' \
                      + ' - Heat_instance.normalized_adj_matrix()\n' \
                      + 'Or assign your own using Heat_instance.Wprime\n'
+        self.item_to_message['node_to_cluster'] = 'No cluster information currently on file. Please run the following method:\n' \
+                     + ' - Heat_instance.draw_clustering_with_annotation()\n' \
+                     + 'Or assign your own using Heat_instance.node_to_cluster\n'
+        self.item_to_message['cluster_to_annotation'] = 'No annotation information currently on file. Please run the following method:\n' \
+                     + ' - Heat_instance.draw_clustering_with_annotation()\n' \
+                     + 'Or assign your own using Heat_instance.cluster_to_annotation\n'
 
             
 # ----------------------------- GETTERS AND SETTERS -------------------------- #
@@ -123,18 +142,24 @@ class Heat:
         if item == 'gene_type': self.gene_type = value
         elif item == 'species': self.species = value
         elif item == 'DEG_list': self.DEG_list = value
-        elif item == 'return_entire_lf': self.return_entire_lf = value
+        elif item == 'node_to_lfc': self.node_to_lfc = value
+        elif item == 'node_to_pvalue': self.node_to_lfc = value
         elif item == 'DG_universe': self.DG_universe = value
         elif item == 'Wprime': self.Wprime = value
+        elif item == 'node_to_cluster': self.node_to_cluster = value
+        elif item == 'cluster_to_annotation': self.cluster_to_annotation = value
         
         else:
             print ('The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
             + '- gene_type\n' \
             + '- species\n' \
             + '- DEG_list\n' \
-            + '- return_entire_lf\n' \
+            + '- node_to_lfc\n' \
+            + '- node_to_pvalue\n' \
             + '- DG_universe\n' \
-            + '- Wprime\n\n')
+            + '- Wprime\n' \
+            + '- node_to_cluster\n' \
+            + '- cluster_to_annotation\n\n')
 
 
 #----------------------- LOAD NETWORK FUNCTIONS ---------------------------------#
@@ -154,11 +179,12 @@ class Heat:
                 return
 
         # create the DEG list with specified cut-offs
-        DEG_list, DEG_to_pvalue, return_entire_lf = create_graph.create_DEG_list(filename, None, p_value_filter, p_value_or_adj,
+        DEG_list, node_to_pvalue, node_to_lfc = create_graph.create_DEG_list(filename, None, p_value_filter, p_value_or_adj,
                 fold_change_filter, self.gene_type, gene_column_header, p_value_column_header, fold_change_column_header, sep,
-                return_entire_lf = True)
+                return_full_values = True)
         self.DEG_list = DEG_list
-        self.return_entire_lf = return_entire_lf
+        self.node_to_lfc = node_to_lfc
+        self.node_to_pvalue = node_to_pvalue
         
         
     def load_STRING_to_digraph(self, filename, confidence_filter=400):
@@ -277,7 +303,7 @@ class Heat:
                     physics_enabled = physics_enabled,
                     node_font_size = node_font_size,
                     graph_id = graph_id,
-                    return_entire_lf = self.return_entire_lf,
+                    node_to_lfc = self.node_to_lfc,
                     **kwargs
                     )
                     
@@ -308,7 +334,7 @@ class Heat:
                         **kwargs):
                         
         # make sure user has run all prerequisites
-        for item in ['DEG_list', 'DG_universe', 'Wprime', 'return_entire_lf']:
+        for item in ['DEG_list', 'DG_universe', 'Wprime', 'node_to_lfc']:
             if self.check_exists(item) == False:
                 return
         
@@ -350,7 +376,7 @@ class Heat:
         # color based on fold change
         if color_lfc == True:
             # define node colors
-            node_to_fld = {n: self.return_entire_lf[n] for n in nodes if n in self.return_entire_lf} # keep only those in graph G
+            node_to_fld = {n: self.node_to_lfc[n] for n in nodes if n in self.node_to_lfc} # keep only those in graph G
             nx.set_node_attributes(G_top_genes, 'fold_change', 0) # give all nodes a default fold change of zero
             nx.set_node_attributes(G_top_genes, 'fold_change', node_to_fld) # overwrite with actual fold change for the nodes that have one
             node_to_color = visJS_module.return_node_to_color(G_top_genes, field_to_map = 'fold_change', 
@@ -425,6 +451,10 @@ class Heat:
         edges_dict = [{'source':node_map[edges[i][0]],
                'target':node_map[edges[i][1]],
                'color':edge_to_color[edges[i]]} for i in range(len(edges))]
+            
+        # save our node_to_cluster dict and 
+        self.node_to_cluster = node_to_cluster
+        self.cluster_to_annotation = cluster_to_annotation
 
         return visJS_module.visjs_network(nodes_dict,edges_dict,
                                           node_label_field = 'node_label',
@@ -476,9 +506,12 @@ class Heat:
         self.string_to_item['gene_type'] = self.gene_type
         self.string_to_item['species'] = self.species
         self.string_to_item['DEG_list'] = self.DEG_list
-        self.string_to_item['return_entire_lf'] = self.return_entire_lf
+        self.string_to_item['node_to_lfc'] = self.node_to_lfc
+        self.string_to_item['node_to_pvalue'] = self.node_to_pvalue
         self.string_to_item['DG_universe'] = self.DG_universe
         self.string_to_item['Wprime'] = self.Wprime
+        self.string_to_item['node_to_cluster'] = self.Wprime
+        self.string_to_item['cluster_to_annotation'] = self.Wprime
 
         try:
             if (type(self.string_to_item[item]) == type(None)):
@@ -489,8 +522,11 @@ class Heat:
             + '- gene_type\n' \
             + '- species\n' \
             + '- DEG_list\n' \
-            + '- return_entire_lf\n' \
+            + '- node_to_lfc\n' \
+            + '- node_to_pvalue\n' \
             + '- DG_universe\n' \
-            + '- Wprime\n\n')
+            + '- Wprime\n' \
+            + '- node_to_cluster\n' \
+            + '- cluster_to_annotation\n\n')
             return False
         return True
