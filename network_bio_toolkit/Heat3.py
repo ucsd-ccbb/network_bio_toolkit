@@ -285,7 +285,7 @@ class Heat:
                 
         seed_nodes = [n for n in self.DEG_list if n in self.DG_universe]
 
-        return heat_and_cluster.draw_clustering(self.DG_universe, seed_nodes,
+        node_to_cluster, to_return = heat_and_cluster.draw_clustering(self.DG_universe, seed_nodes,
                     rad_positions = rad_positions,
                     Wprime = self.Wprime,
                     k = k,
@@ -306,7 +306,7 @@ class Heat:
                     node_to_lfc = self.node_to_lfc,
                     **kwargs
                     )
-                    
+        return to_return
                     
 #----------------------- ANNOTATION -------------------------------------#
      
@@ -463,6 +463,36 @@ class Heat:
                                           node_font_size = 20,
                                           graph_id = graph_id,
                                           **kwargs)
+                                          
+#------------------ SAVE DATA TO FILE -----------------------------------#
+
+    # write cluster id, seed node Y/N, annotation, differential expression log-fold-change, and differential 
+    # expression adjusted p-value to a file
+    def write_cluster_table(self, to_write_filename):
+    
+        # make sure user has run all prerequisites
+        for item in ['DG_universe', 'DEG_list', 'node_to_cluster', 'node_to_lfc', 'node_to_pvalue', 'cluster_to_annotation']:
+            if self.check_exists(item) == False:
+                return
+
+        f = open(to_write_filename,"w+")
+        f.write('gene,cluster,seed-node,annotation,lfc,p-value\n')
+
+        # map nodes to bool value of whether they are a DEG or not
+        node_to_DEG_bool = {node:True if node in self.DEG_list else False for node in self.DG_universe}
+
+        for node in self.DG_universe:
+            try:
+                cluster = self.node_to_cluster[node]
+                seed_node = node_to_DEG_bool[node]
+                anno = self.cluster_to_annotation[self.node_to_cluster[node]]
+                lfc = self.node_to_lfc[node]
+                p = self.node_to_pvalue[node]
+                
+                to_write_string = str(node) + ',' + str(cluster) + ',' + str(seed_node) + ',' + str(anno) + ',' + str(lfc) + ',' + str(p) + '\n'
+                f.write(to_write_string) 
+            except:
+                pass
         
 
 #------------------ HELPER FUNCTIONS ------------------------------------#  

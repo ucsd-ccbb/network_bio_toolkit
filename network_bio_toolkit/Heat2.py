@@ -42,6 +42,7 @@ class Heat:
         self.node_to_pvalue = None
         self.DG_universe = None
         self.Wprime = None
+        self.node_to_cluster = None
         
         # map string to actual instance variable
         self.string_to_item = {}
@@ -52,6 +53,7 @@ class Heat:
         self.string_to_item['node_to_pvalue'] = self.node_to_pvalue
         self.string_to_item['DG_universe'] = self.DG_universe
         self.string_to_item['Wprime'] = self.Wprime
+        self.string_to_item['node_to_cluster'] = self.node_to_cluster
         
         # instanciating error message dict
         self.item_to_message = {}
@@ -74,6 +76,9 @@ class Heat:
         self.item_to_message['Wprime'] = 'No adjacency matrix currently on file. Please run the following method:\n' \
                      + ' - Heat_instance.normalized_adj_matrix()\n' \
                      + 'Or assign your own using Heat_instance.Wprime\n'
+        self.item_to_message['node_to_cluster'] = 'No cluster dictionary currently on file. Please run the following method:\n' \
+                     + ' - Heat_instance.draw_clustering()\n' \
+                     + 'Or assign your own using Heat_instance.node_to_cluster\n'
 
             
 # ----------------------------- GETTERS AND SETTERS -------------------------- #
@@ -130,6 +135,7 @@ class Heat:
         elif item == 'node_to_pvalue': self.node_to_pvalue = value
         elif item == 'DG_universe': self.DG_universe = value
         elif item == 'Wprime': self.Wprime = value
+        elif item == 'node_to_cluster': self.node_to_cluster = value
         
         else:
             print ('The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
@@ -139,7 +145,8 @@ class Heat:
             + '- node_to_lfc\n' \
             + '- node_to_pvalue\n' \
             + '- DG_universe\n' \
-            + '- Wprime\n\n')
+            + '- Wprime\n' \
+            + '- node_to_cluster\n\n')
 
 
 #----------------------- LOAD NETWORK FUNCTIONS ---------------------------------#
@@ -265,7 +272,7 @@ class Heat:
                 
         seed_nodes = [n for n in self.DEG_list if n in self.DG_universe]
 
-        return heat_and_cluster.draw_clustering(self.DG_universe, seed_nodes,
+        self.node_to_cluster, to_return = heat_and_cluster.draw_clustering(self.DG_universe, seed_nodes,
                     rad_positions = rad_positions,
                     Wprime = self.Wprime,
                     k = k,
@@ -286,8 +293,36 @@ class Heat:
                     node_to_lfc = self.node_to_lfc,
                     **kwargs
                     )
+        return to_return
                     
-                    
+#------------------ SAVE DATA TO FILE -----------------------------------#
+
+    # write cluster id, seed node Y/N, differential expression log-fold-change, and differential 
+    # expression adjusted p-value to a file
+    def write_cluster_table(self, to_write_filename):
+    
+        # make sure user has run all prerequisites
+        for item in ['DG_universe', 'DEG_list', 'node_to_cluster', 'node_to_lfc', 'node_to_pvalue']:
+            if self.check_exists(item) == False:
+                return
+
+        f = open(to_write_filename,"w+")
+        f.write('gene,cluster,seed-node,lfc,p-value\n')
+
+        # map nodes to bool value of whether they are a DEG or not
+        node_to_DEG_bool = {node:True if node in self.DEG_list else False for node in self.DG_universe}
+
+        for node in self.DG_universe:
+            try:
+                cluster = self.node_to_cluster[node]
+                seed_node = node_to_DEG_bool[node]
+                lfc = self.node_to_lfc[node]
+                p = self.node_to_pvalue[node]
+                
+                to_write_string = str(node) + ',' + str(cluster) + ',' + str(seed_node) + ',' + str(lfc) + ',' + str(p) + '\n'
+                f.write(to_write_string) 
+            except:   
+                pass
 
 
 #------------------ HELPER FUNCTIONS ------------------------------------#  
@@ -305,6 +340,7 @@ class Heat:
         self.string_to_item['node_to_pvalue'] = self.node_to_lfc
         self.string_to_item['DG_universe'] = self.DG_universe
         self.string_to_item['Wprime'] = self.Wprime
+        self.string_to_item['node_to_cluster'] = self.node_to_cluster
 
         try:
             if (type(self.string_to_item[item]) == type(None)):
@@ -317,6 +353,7 @@ class Heat:
             + '- DEG_list\n' \
             + '- node_to_lfc\n' \
             + '- DG_universe\n' \
-            + '- Wprime\n\n')
+            + '- Wprime\n' \
+            + '- node_to_cluster\n\n')
             return False
         return True

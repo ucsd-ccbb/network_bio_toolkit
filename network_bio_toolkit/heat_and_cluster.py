@@ -142,7 +142,7 @@ def draw_clustering(DG_universe, seed_nodes,
            'target':node_map[edges[i][1]],
            'color':'grey'} for i in range(len(edges))]
 
-    return visJS_module.visjs_network(nodes_dict,edges_dict,
+    return node_to_cluster, visJS_module.visjs_network(nodes_dict,edges_dict,
                                       node_label_field = 'node_label',
                                       node_size_multiplier = node_size_multiplier,
                                       physics_enabled = physics_enabled,
