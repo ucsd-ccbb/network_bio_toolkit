@@ -6,6 +6,7 @@ Date: 4/6/18
 """
 
 import create_graph
+reload(create_graph)
 import heat_and_cluster
 reload(heat_and_cluster)
 import visJS2jupyter.visualizations as visualizations # pip install visJS2jupyter

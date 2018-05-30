@@ -201,6 +201,13 @@ def load_ndex_from_server(UUID, relabel_node_field = None, filter_list = None):
         node_id_to_name = nx.get_node_attributes(G, relabel_node_field)
         G = nx.relabel_nodes(G, node_id_to_name)
         #for (n,d) in G.nodes(data = True): del d[relabel_node_field] # delete the redundant field after
+        
+    # check to see if there is some weight field that needs to be converted to floats
+    try:
+        for n in G.edges(data = True):
+            n[2]['weight'] = float(n[2]['weight'])
+    except:
+        x = 1 # place holder because it was getting mad at me for having no except
 
     # no filtering
     if filter_list == None:
