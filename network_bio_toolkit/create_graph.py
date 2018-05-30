@@ -207,7 +207,7 @@ def load_ndex_from_server(UUID, relabel_node_field = None, filter_list = None):
         for n in G.edges(data = True):
             n[2]['weight'] = float(n[2]['weight'])
     except:
-        x = 1 # place holder because it was getting mad at me for having no except
+        pass
 
     # no filtering
     if filter_list == None:
