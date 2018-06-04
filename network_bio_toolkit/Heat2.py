@@ -19,6 +19,7 @@ import visJS2jupyter.visualizations as visualizations # pip install visJS2jupyte
 
 import networkx as nx
 import pandas as pd
+import matplotlib.pyplot as plt
 
 class Heat:
 
@@ -294,6 +295,36 @@ class Heat:
                     **kwargs
                     )
         return to_return
+        
+        
+    def cluster_legend(self, cluster_size_cut_off = 5):
+    
+        # make sure user has run all prerequisites
+        for item in ['node_to_cluster']:
+            if self.check_exists(item) == False:
+                return
+        
+        node_to_color = heat_and_cluster.assign_colors_to_clusters(self.node_to_cluster, cluster_size_cut_off) # get colors
+        node_to_color = pd.Series(node_to_color).drop_duplicates() # clean up color dict
+        node_to_cluster = pd.Series(self.node_to_cluster) # clean up cluster dict
+
+        # create a mapping from cluster id to color
+        cluster_to_color = {}
+        for gene in node_to_color.index.tolist():
+            color = node_to_color.loc[gene]
+            cluster_id = node_to_cluster.loc[gene]
+            cluster_to_color[cluster_id] = color
+
+        # plot the legend
+        plt.figure(figsize = (12,6))
+        dcount = -1
+        for cluster in node_to_cluster.value_counts().keys():
+            dcount += 1
+            plt.plot([0.1], [dcount], 'o', color = cluster_to_color[cluster])
+            plt.annotate('cluster ' + str(cluster), [0.2, dcount - 0.1])
+
+        plt.xlim([0, 3])
+        plt.ylim([-5, len(cluster_to_color) + 5])
                     
 #------------------ SAVE DATA TO FILE -----------------------------------#
 

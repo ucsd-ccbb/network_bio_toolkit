@@ -65,13 +65,14 @@ def tf_pvalues(DG_TF, DG_universe, DEG_list):
 
             x_n_to_p_score[(x,n)] = TR_to_pvalue[TR] # record that we have calculated this value
 
-        TR_to_pvalue = pd.Series(TR_to_pvalue).sort_values(ascending=False)
+        TR_to_pvalue = pd.Series(TR_to_pvalue).sort_values(ascending = False)
 
     return TR_to_pvalue
 
 
 
 def tf_target_enrichment(DG_TF, DG_universe, DEG_list):
+
     to_return = tf_pvalues(DG_TF, DG_universe, DEG_list)
     to_return = to_return.rename('tf-target enrichment')
     return to_return
@@ -387,7 +388,7 @@ def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_val
 
 
 
-def compare_genes(z_scores, genes_to_rank, fig_size=(12, 7), font_size=12, anno_vert_dist=0.025):
+def compare_genes(z_scores, genes_to_rank, fig_size = (12, 7), font_size = 12, anno_vert_dist = 0.025):
     # We don't want to plot the zero z-scores
     z_scores_hist = [x for x in z_scores if x != 0]
 
@@ -410,9 +411,9 @@ def compare_genes(z_scores, genes_to_rank, fig_size=(12, 7), font_size=12, anno_
     y_points = [0] * len(annotate_list)
 
     # plot points
-    plt.figure(figsize=fig_size)
-    ax = sns.distplot(z_scores_hist, kde=True)
-    plt.scatter(x_points, y_points, marker='^', s=200, c='r')
+    plt.figure(figsize = fig_size)
+    ax = sns.distplot(z_scores_hist, kde = True)
+    plt.scatter(x_points, y_points, marker = '^', s = 200, c = 'r')
 
     # annotate points
     for i in range(len(annotate_list)):
@@ -420,11 +421,11 @@ def compare_genes(z_scores, genes_to_rank, fig_size=(12, 7), font_size=12, anno_
         to_print = to_print.replace("]", "")
         to_print = to_print.replace("\'", "")
         ax.annotate(to_print,
-                    xy=(x_points[i],
+                    xy = (x_points[i],
                         anno_vert_dist),
-                    rotation=90,
-                    horizontalalignment='center',
-                    verticalalignment='bottom',
+                    rotation = 90,
+                    horizontalalignment = 'center',
+                    verticalalignment = 'bottom',
                     fontsize=font_size)
 
 
