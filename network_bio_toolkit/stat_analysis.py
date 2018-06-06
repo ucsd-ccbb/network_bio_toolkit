@@ -73,12 +73,21 @@ def tf_pvalues(DG_TF, DG_universe, DEG_list):
 
 def tf_target_enrichment(DG_TF, DG_universe, DEG_list):
 
+    """
+        Sets up tf_pvalues() to calculate enrichment of transcription factors and their
+        targets.
+    """
+
     to_return = tf_pvalues(DG_TF, DG_universe, DEG_list)
     to_return = to_return.rename('tf-target enrichment')
     return to_return
 
 
 def tf_enrichment(TF_list, DEG_full_graph, DEG_list):
+
+    """
+        Sets up tf_pvalues() to calculate enrichment of transcription factors.
+    """
 
     # make a graph that will manipulate our p-value function to calculate one TF-enrichment p-value
     dummy = 'TF_ENRICHMENT'
@@ -94,6 +103,7 @@ def tf_enrichment(TF_list, DEG_full_graph, DEG_list):
 
 	
 def tf_zscore(DG, DEG_list, bias_filter = 0.25):
+
     """
         The goal of our z-score function is to predict the activation states of the TF's. We observe how a TF relates
         to each of its targets to make our prediction. We compare each targets' observed gene regulation (either up or
@@ -215,6 +225,7 @@ def not_bias_corrected_tf_zscore(DG, DEG_list):
 
 
 def calculate_bias(DG):
+
     """
         The goal of our z-score function is to predict the activation states of the TF's. We observe how a TF relates
         to each of its targets to make our prediction. We compare each targets' observed gene regulation (either up or
@@ -347,6 +358,8 @@ def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_val
 
         Args:
             z_score_series: a Pandas Series that maps all TF's to their calculated z-scores (or p-values)
+            DEG_to_pvalue: Dict, maps gene names to their (adj) p-values found in the expression file
+            DEG_to_updown: Dict, maps gene names to their (log) fold change found in the expression file
             act: Boolean, True to sort by most positive z-score, False to sort by most negative. Ignored if abs_value
                 is True
             abs_value: Boolean, True to sort by absolute z-score, False otherwise
@@ -355,6 +368,7 @@ def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_val
         Returns: A sorted Pandas Dataframe of the top genes, mapping each gene to its z-score
 
     """
+    
     # top activating and inhibiting, sort by strongest zscore or log(pvalue)
     if abs_value == True:
         top_series_abs = z_score_series.abs().sort_values(ascending=False).head(top)
@@ -389,6 +403,22 @@ def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_val
 
 
 def compare_genes(z_scores, genes_to_rank, fig_size = (12, 7), font_size = 12, anno_vert_dist = 0.025):
+
+    """
+        Plots a histogram of the distribution of z-scores, and marks the genes indicated in genes_to_rank
+        so that their values can be visually compared.
+
+        Args:
+            z_scores: List, z-scores of all genes in your analysis
+            genes_to_rank: List, genes you wish to highlight in the distribution
+            fig_size: (Int, Int), the dimensions of the histogram.
+            font_size: Int, the font size of the genes_to_rank labels
+            anno_vert_dist: Float, the distance separating the genes_to_rank labels from the x-axis
+
+        Returns: A seaborn based histogram.
+
+    """
+
     # We don't want to plot the zero z-scores
     z_scores_hist = [x for x in z_scores if x != 0]
 
@@ -444,35 +474,58 @@ def vis_tf_network(DG, tf, DEG_list,
 				   ceil_val=10,
                    color_max_frac = 1.0,
 				   color_min_frac = 0.0,
-				   vmin=None,
-				   vmax=None,
+				   vmin = None,
+				   vmax = None,
 				   tf_shape = 'star'
                    ):
 				   
     """
-        This fuction visualizes the network consisting of one transcription factor and its downstream regulated genes. The regulator's 
-		node is yellow, while all regulated genes are various shades of blue or red. The shade of blue or red is calculated based on 
-		the fold change of each gene given in the file DEG_filename (which must be of the srndard format indicated by the function 
-		create_DEG_list). Red is up-regulated. Blue is down-regulated. White nodes did not have enough information. Darker red/blue 
-		indicates a stronger (larger absolute value) fold change value. Node size is deterined by adjusted p-value, also from DEG_filename. 
-		Larger nodes have a more significant p-value. Nodes from DEG_list will have a black border. Activating edges are red. Inhibiting 
-		edges are blue. 
-		
-		The package visJS2jupyter is required for this function. Type "pip install visJS2jupyter" into your command prompt if you do not already
-		have this package.
-		
-		DEG_filename: Our standard input file must be a tab separated list, where each row represents a gene. This file must contain column headers
-		"adj_p_value" (adjusted p-value), "gene_symbol", and "fold_change" (the fold change or log fold change).
+        This fuction visualizes the network consisting of one transcription factor and its downstream regulated genes. Nodes are colored with 
+        a shade of blue or red calculated based on the fold change of each gene given in the file DEG_filename. Red is up-regulated. Blue is 
+        down-regulated. White nodes did not have enough information. Darker red/blue indicates a stronger (larger absolute value) fold change 
+        value. Node size is deterined by adjusted p-value, also from DEG_filename. Larger nodes have a more significant p-value. Nodes from 
+        DEG_list will have a black border. Activating edges are red. Inhibiting edges are blue. 
 
         Args:
-            DG: A networkx graph, your (potentially TF-filtered) background networkx
-			tf: string, all caps gene symbol of the regulator whose sub-network you wish to visualizes
-			DEG_filename: string, the path of where to find your standard input DEG file
-			DEG_list: list of DEG's as strings, output of create_graph.creat_DEG_list
-			directed_edges: bool, True to include directional arrows on edges, False otherwise
-			node_spacing: int, increase this number if your nodes are too close together (for a graph with many nodes)
-			    or decrease if they are too far apart (for a graph with fewer nodes)
-			graph_id: change this number to display multiple graphs in one notebook
+            DG: Networkx graph, your (potentially TF-filtered) background networkx
+            
+            tf: String, all caps gene symbol of the regulator whose sub-network you wish to visualizes
+            
+            DEG_list: List, list of DEG's as strings, output of create_graph.creat_DEG_list
+            
+            DEG_to_pvalue: Dict, maps gene names to their (adj) p-values found in the expression file
+            
+            DEG_to_updown: Dict, maps gene names to their (log) fold change found in the expression file
+            
+            directed_edges: Boolean, True to include directional arrows on edges, False otherwise
+            
+            node_spacing: Int, increase this number if your nodes are too close together (for a graph with many nodes) or decrease 
+                if they are too far apart (for a graph with fewer nodes)
+                
+            color_non_DEGs: Boolean, True will color all nodes in graph with their log fold change, False will leave non-DEG genes grey.
+            
+            color_map: matplotlib.cm.*, a matplotlib colormap
+            
+            graph_id: Int, change this number to display multiple graphs in one notebook
+            
+            tf_size_amplifier: Int, size multiplier applied only to the transcription factor
+            
+            alpha: Float, alpha parameter to visJS_module.return_node_to_color()
+            
+            color_vals_transform: String, function name. Either 'log', 'sqrt', 'ceil', or 'None'. 
+                color_vals_transform parameter to visJS_module.return_node_to_color()
+                
+            ceil_val: Float, value cut-off for data. ceil_val parameter to visJS_module.return_node_to_color()
+            
+            color_max_frac: Float, color_max_frac parameter to visJS_module.return_node_to_color()
+            
+            color_min_frac: Float, color_min_frac parameter to visJS_module.return_node_to_color()
+			
+            vmin: Float, vmin parameter to visJS_module.return_node_to_color()
+			
+            vmax: Float, vmax parameter to visJS_module.return_node_to_color()
+			
+            tf_shape: String, ex. 'star', 'circle', 'dot'... Shape to set transcription factor
 
         Returns: HTML output that will display an interactive network in a jupyter notebooks cell.
 
@@ -534,7 +587,7 @@ def vis_tf_network(DG, tf, DEG_list,
     all_circles = ['circle']*len(nodes)
     node_to_shape = dict(zip(nodes, all_circles))
     node_to_shape[tf] = tf_shape
-    nx.set_node_attributes(G, name='shape', values=node_to_shape)  # give all nodes a default fold change of zero
+    nx.set_node_attributes(G, name = 'shape', values = node_to_shape)  # give all nodes a default fold change of zero
     
     # define node attributes
     nodes_dict = [{"id":n,
@@ -542,8 +595,8 @@ def vis_tf_network(DG, tf, DEG_list,
                    "border_width": node_to_border_width[n],
                    "size_field": node_to_size[n],
                    "node_shape": node_to_shape[n],
-                   "x":pos[n][0]*node_spacing,
-                   "y":pos[n][1]*node_spacing} for n in nodes]
+                   "x":pos[n][0] * node_spacing,
+                   "y":pos[n][1] * node_spacing} for n in nodes]
     node_map = dict(zip(nodes,range(len(nodes))))  # map to indices for source/target in edges
     
     #------------ EDGES --------------#
@@ -580,18 +633,33 @@ def vis_tf_network(DG, tf, DEG_list,
 
 
 def to_csv(out_filename, z_score_series, DEG_to_pvalue, DEG_to_updown, tf_target_enrichment, DG_TF):
-    top_overall = top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act=False, abs_value=True,
-                             top=len(z_score_series))
+
+    """
+        Outputs information gathered from URA Analysis to a single csv file.
+
+        Args:
+            out_filename: String, filepath to write to.
+            z_score_series: Pandas series, z-scores obtained from calling tf_zscore()
+            DEG_to_pvalue: Dict, maps gene names to their (adj) p-values found in the expression file
+            DEG_to_updown: Dict, maps gene names to their (log) fold change found in the expression file
+            tf_target_enrichment:Pandas series, p-values obtained from calling tf_pvalues()
+            DG_TF: Networkx, String network filtered by transcription factors, output of create_graph.load_STRING_to_digraph()
+
+        Returns: N/A
+
+    """
+    
+    top_overall = top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = False, abs_value = True,
+                             top = len(z_score_series))
     top_overall.index.name = 'TF'
 
     top_overall['TF_target_enrichment'] = tf_target_enrichment
     TF_to_neighbors = [list([str(x) for x in DG_TF.neighbors(tf)]) for tf in top_overall.index]
     top_overall['targets'] = TF_to_neighbors
 
-    top_overall.to_csv(path_or_buf=out_filename, sep='\t')
+    top_overall.to_csv(path_or_buf = out_filename, sep='\t')
 
     # Read in the file
-
     with open(out_filename, 'r') as file:
         filedata = file.read()
 
@@ -610,6 +678,22 @@ def to_csv(out_filename, z_score_series, DEG_to_pvalue, DEG_to_updown, tf_target
 
 
 def put_in_bucket(d, l, value):
+
+    """
+        If this helper function is called on every gene in our analysis, it will group all 
+        genes with the same z-score into the same list. Each of those lists of same-z-score 
+        genes is stored in l.
+
+        Args:
+            d: Dict, in the context of this file, a dict of genes to z-scores
+            l: List of Lists, represents out buckets. Initiate with an empty list, the continually pass in
+                l to build up your buckets 
+            value: String, the current gene we would like to put into a bucket
+
+        Returns: the list now containing value in its proper bucket within l.
+
+    """
+
     # dummy list to prevent ['string'] -> ['s','t','r','i','n','g']
     dummy = []
 

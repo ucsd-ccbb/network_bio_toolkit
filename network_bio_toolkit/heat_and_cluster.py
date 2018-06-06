@@ -22,6 +22,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+# ------------------------- NETWORK VISUALIZATION FUNCTIONS -------------------#
+
 def draw_clustering(DG_universe, seed_nodes,
                     color_lfc = False,
                     rad_positions = True,
@@ -44,7 +46,7 @@ def draw_clustering(DG_universe, seed_nodes,
                     color_map = plt.cm.bwr,
                     alpha_lfc = 1.0, 
 				    color_vals_transform = None,
-				    ceil_val=10,
+				    ceil_val = 10,
                     color_max_frac = 1.0,
 				    color_min_frac = 0.0,
                     node_to_lfc = None,
@@ -52,6 +54,74 @@ def draw_clustering(DG_universe, seed_nodes,
 				    vmax = None,
                     **kwargs
                    ):
+                   
+    """
+        Creates a visJS2jupyter interactive network in a Jupyter notebook cell that separated the input graph into
+        clusters, and colors those clusters either to indicated which cluster they are in, or by log fold change.
+        
+        Args:
+            DG_universe: Networkx graph, background network for clustering analysis
+            
+            seed_nodes: List, seed nodes of heat propagation
+            
+            color_lfc: Boolean, True to color nodes with log fold change, False to color by cluster
+            
+            rad_positions: Boolean, True to separate nodes by cluster, False to leave intermixed
+            
+            Wprime: Adjacency matrix for heat propagation. If Wprime = None, Wprime will be calculated 
+                within this function
+                
+            k: FLoat, parameter given to networkx.spring_layout() function. If in doubt, leave as None.
+            
+            largest_connected_component: Boolean, True to visualize only the largest connected component, False to visualize all nodes.
+            
+            alpha: Not currently in use. Functionality may be added later.
+            
+            num_its: Not currently in use. Functionality may be added later.
+            
+            num_top_genes: Int, number of genes to visualize 
+            
+            cluster_size_cut_off: Int, colors clusters below this size grey.
+            
+            remove_stray_nodes: Int, remove clusters of size below cluster_size_cut_off from the visualization.
+            
+            r: Float, radius of cluster separation (rad_positions must be True)
+            
+            x_offset: Int, helper that moves clusters around if some are laying on top of each other
+            
+            y_offset: Int, helper that moves clusters around if some are laying on top of each other
+            
+            node_spacing: Int, increase if there is a lot of overlap between nodes (will happen if there are many nodes in the graph)
+            
+            node_size_multiplier: Int, scales the size of each node by this number
+            
+            physics_enabled: Boolean, allow interactive, movable nodes and edges. rad_positions must be False.
+            
+            node_font_size: Int, font size of the labels marking each seed node
+            
+            graph_id: Int, change between visJS calls if you want to visualize multiple networkx int the same jupyter notebook
+            
+            color_map: matplotlib.cm.*, a networkx colormap used when coloring with log fold change values (color_lfc must be True)
+            
+            alpha_lfc: input to visJS_module.return_node_to_color(). (color_lfc must be True)
+            
+            color_vals_transform: input to visJS_module.return_node_to_color(). (color_lfc must be True)
+            
+            ceil_val: input to visJS_module.return_node_to_color(). (color_lfc must be True)
+            
+            color_max_frac: input to visJS_module.return_node_to_color(). (color_lfc must be True)
+            
+            color_min_frac: input to visJS_module.return_node_to_color(). (color_lfc must be True)
+            
+            node_to_lfc: Dict, mapping gene names to log fold change values. input to visJS_module.return_node_to_color(). (color_lfc must be True)
+            
+            vmin: input to visJS_module.return_node_to_color(). (color_lfc must be True)
+            
+            vmax: input to visJS_module.return_node_to_color(). (color_lfc must be True)
+
+        Returns: The network that will be visualized in the jupyter notebook cell.
+
+    """
     
     # find hottest genes
     if Wprime is None:
@@ -59,7 +129,7 @@ def draw_clustering(DG_universe, seed_nodes,
     
  #   Fnew = visualizations.network_propagation(DG_universe, Wprime, seed_nodes, alpha = alpha, num_its = num_its)
     Fnew = visualizations.network_propagation(nx.Graph(DG_universe), Wprime, seed_nodes)
-    top_genes = Fnew.sort_values(ascending=False)[0:num_top_genes].index
+    top_genes = Fnew.sort_values(ascending = False)[0:num_top_genes].index
     G_top_genes = nx.Graph(DG_universe).subgraph(top_genes) # casting to Graph to match heat prop
     
     # keep only the largest connected component
@@ -150,6 +220,42 @@ def draw_clustering(DG_universe, seed_nodes,
                                       graph_id = graph_id,
                                       **kwargs) 
 
+                                      
+def draw_legend(vmin, vmax, cmap = mpl.cm.bwr, label = 'Units'):
+
+    """
+        FIXXXXXX
+        Our p-value function calculates the log of the p-value for every TF in the graph using [scipy.stats.hypergeom.logsf]
+        (https://docs.scipy.org/doc/scipy-0.19.1/reference/generated/scipy.stats.hypergeom.html). These values help us
+        determine which TF's are actually associated with our DEG's. If a TF is given a high value (because we are
+        working with logs, not straight p-values), then it is likely that there is correlation between that TF and its
+        DEG targets. Therefore, it is likely that TF is responsible for some of our observed gene expression.
+        Note that if a TF is given a value of zero, that means none of the TF's targets were DEG's.
+
+        Args:
+            DG_TF: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes (filtered)
+            DG_universe: a networkx graph containing all interactions in our universe (not filtered)
+            DEG_list: list of strings, your list of differentially expressed genes
+
+        Returns: A sorted Pandas Series that maps a transcription factor's gene symbol to its calculated p-vlaue log.
+
+    """
+
+    # Make a figure and axes with dimensions as desired.
+    fig = plt.figure(figsize=(8, 3))
+    ax = fig.add_axes([0.05, 0.80, 0.9, 0.15])
+
+    # Set the colormap and norm to correspond to vmin and vmax of your original graph
+    norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
+    cb = mpl.colorbar.ColorbarBase(ax, cmap=cmap,
+                                    norm=norm,
+                                    orientation='horizontal')
+    # write label/units below color map
+    cb.set_label(label)                                      
+                                      
+                                      
+# ------------------- HELPER FUNCTIONS -----------------------------------------#
+                                      
 def bias_position_by_partition(pos, partition, r=1.0, x_offset = 2, y_offset = 2):
     '''
     Bias the positions by partition membership, to group them together
