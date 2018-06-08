@@ -19,6 +19,10 @@ from IPython.display import display
 class PrepGsea:
     
     def __init__(self, gmt_file, expression_file, meta_file, output_dir, display_df_meta = False):
+    
+        """
+            Initiates PrepGsea class instance, initiating all instance variables to None.
+        """
         
         self.gmt_file = gmt_file 
         self.expression_file = expression_file
@@ -42,6 +46,12 @@ class PrepGsea:
     #------------------------------------ GSEA FUNCTIONS ------------------------------------#
             
     def remove_extra_columns(self):    
+    
+        """
+            Creates a checkbox for every column in the graph, for the user to indicate which columns
+            they would like to leave out of the analysis.
+        """
+    
         print('Indicate any columns that contain information you do not want to analyze.')
 
         self.col_headers = list(self.df_meta)
@@ -65,13 +75,25 @@ class PrepGsea:
         display(to_remove_form)
     
     def choose_comparison_col(self, sample_col_name = 'Sample_name'):
+    
+        """
+            Creates a drop down widget for the user to mark which column they would 
+            like to be the comparison column (the column that will have two options
+            in the analysis.)
+            
+            Args:
+                sample_col_name = String, the column name of the sample/gene names column, so that it can be 
+                    left out of the comparison column options.
+                    
+            Returns: technically nothing, but will display the widget.
+        """
         
         # remove extra columns
         self.col_headers = list(self.df_meta)
         to_remove_list = self.get_values(self.to_remove_checkbox)
         for p in to_remove_list:
             if p in self.col_headers:
-                self.df_meta = self.df_meta.drop([p], axis=1)
+                self.df_meta = self.df_meta.drop([p], axis = 1)
                 self.col_headers = list(self.df_meta)
         
         # keep track of our sample column. We want this in the df but not in the widget
@@ -84,9 +106,9 @@ class PrepGsea:
         
         # generate pretty widget
         comparison_form_item_layout = Layout(
-            display='flex',
-            flex_flow='row',
-            justify_content='space-between'
+            display = 'flex',
+            flex_flow = 'row',
+            justify_content = 'space-between'
         )
         comparison_form_items = [
             Box([Label(value = 'Comparison options'), Dropdown(options = self.col_headers)], layout =  comparison_form_item_layout)
