@@ -42,8 +42,26 @@ To install these packages in your comand prompt, use the following commands:
 
 Information on importing network_bio_toolkit coming soon.
 
+## Package summary
 
-## Features and Examples
+
+## Package tools and examples
+
+### Network analysis workflow
+
+- Integrate set of differentially expressed (DE) genes with a user-specified interactome
+- User may specify significance cutoffs for inclusion in network propagation
+- Interactome may be loaded from NDEX
+- Localization analysis of DE genes
+- Network propagation from DE gene list
+- Clustering of resulting nearest N network proximal genes to input DE genes
+- Layout options to focus on individual clusters
+- Annotation of clusters (over-representation analysis, with gprofiler)
+- Can export to cytoscape for further formatting
+- CSV exported with compiled results
+- integration with drugbank??
+
+### Gene set enrichment analysis workflow
 
 ### Upstream Regulator Analysis (ura) package
 This package includes functions to help you determine potential upstream regulators for a set of differencially expressed genes that you supply. It was inspired by Ingenuity System's [Ingenuity Upstream Regulator Analysis in IPA®](http://pages.ingenuity.com/rs/ingenuity/images/0812%20upstream_regulator_analysis_whitepaper.pdf). Our create_graph module will help you load all of the networks you need for this analysis into networkx graph representations. Our stat_analysis package will calculate p-value and z-score statistics for each potential upstream regulator to determine each one's relevance to your input data set. stat_analysis also includes functions that display information about significant regulators as pandas dataframes or visJS2jupyter networks.
@@ -55,6 +73,8 @@ These are available under the "notebooks" folder
 1) **URA_Basic_Example**: This notebook provides details on how to use our URA package for your own 
 2) **URA_huvec_brca**: This notebook doubles as a validaiton notebook and a real-world use case example. We compare the results of our URA package to the results from the Ingenuity Upstream Regulator Analysis's accompanying paper: [Causal analysis approaches in Ingenuity Pathway Analysis](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3928520/).
 3) **URA_Arthritis**: This notebook is a case study done on a data set produced by the UCSD CCBB. It focuses on the flow of the funcitons in the URA package, with empahsis on the order you should call each function.
+
+
 
 
 ## Authors
