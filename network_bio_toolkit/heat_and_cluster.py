@@ -225,20 +225,15 @@ def draw_clustering(DG_universe, seed_nodes,
 def draw_legend(vmin, vmax, cmap = mpl.cm.bwr, label = 'Units'):
 
     """
-        FIXXXXXX
-        Our p-value function calculates the log of the p-value for every TF in the graph using [scipy.stats.hypergeom.logsf]
-        (https://docs.scipy.org/doc/scipy-0.19.1/reference/generated/scipy.stats.hypergeom.html). These values help us
-        determine which TF's are actually associated with our DEG's. If a TF is given a high value (because we are
-        working with logs, not straight p-values), then it is likely that there is correlation between that TF and its
-        DEG targets. Therefore, it is likely that TF is responsible for some of our observed gene expression.
-        Note that if a TF is given a value of zero, that means none of the TF's targets were DEG's.
+        This draws a colormap in a cell that is colored with cmap and ranges from vmin to vmax. 
 
         Args:
-            DG_TF: Digraph, a directed networkx graph with edges mapping from transcription factors to expressed genes (filtered)
-            DG_universe: a networkx graph containing all interactions in our universe (not filtered)
-            DEG_list: list of strings, your list of differentially expressed genes
+            vmin: Int, the minimum value to display in the colormap
+            vmax: Int, the maximum value to display in the colormap
+            cmap: matplotlib colormap, used to color the colorbar
+            label: String, the text to display below the colorbar
 
-        Returns: A sorted Pandas Series that maps a transcription factor's gene symbol to its calculated p-vlaue log.
+        Returns: A matplotlib colorbar
 
     """
 
@@ -258,33 +253,56 @@ def draw_legend(vmin, vmax, cmap = mpl.cm.bwr, label = 'Units'):
 # ------------------- HELPER FUNCTIONS -----------------------------------------#
                                       
 def bias_position_by_partition(pos, partition, r=1.0, x_offset = 2, y_offset = 2):
+
     '''
-    Bias the positions by partition membership, to group them together
-    
+        Bias the positions by partition membership, to group them together
     '''
     
     partition = pd.Series(partition)
     
     for p in list(np.unique(partition)):
 
-        focal_nodes = partition[partition==p].index.tolist()
+        focal_nodes = partition[partition == p].index.tolist()
         for n in focal_nodes:
-            pos[n][0]+=pol2cart(r,float(p)/(np.max(partition)+1)*x_offset*np.pi)[0]
-            pos[n][1]+=pol2cart(r,float(p)/(np.max(partition)+1)*y_offset*np.pi)[1]
+            pos[n][0] += pol2cart(r,float(p)/(np.max(partition) + 1) * x_offset * np.pi)[0]
+            pos[n][1] += pol2cart(r,float(p)/(np.max(partition) + 1) * y_offset * np.pi)[1]
             
     return pos
 
 def pol2cart(rho, phi):
+
+    '''
+        Helper function for bias_position_by_partition().
+    '''
+    
     x = rho * np.cos(phi)
     y = rho * np.sin(phi)
     return(x, y)
 
 def cart2pol(x, y):
+
+    '''
+        Was once a helper function for bias_position_by_partition().
+    '''
+    
     rho = np.sqrt(x**2 + y**2)
     phi = np.arctan2(y, x)
     return(rho, phi)
 
 def assign_colors_to_clusters(node_to_cluster, cluster_size_cut_off = 20, color_list = None):
+
+    """
+        Assigns each cluster a color.
+
+        Args:
+            node_to_cluster: Dict, output of louvain community() method. Maps genes to their cluster id.
+            cluster_size_cut_off: Int, Color clusters with less than this number of genes grey.
+            color_list: List, if you would like to supply your own colors rather than the ones we automatically generate
+                specify of a list of hexidecimal colors here. When in doubt, leave as None.
+
+        Returns: A dict that maps genes to their color.
+
+    """
 
     node_to_color = {}
     
@@ -311,6 +329,11 @@ def assign_colors_to_clusters(node_to_cluster, cluster_size_cut_off = 20, color_
     return node_to_color
 
 def invert_dict(old_dict):
+
+    """
+        Helper function for assign_colors_to_clusters().
+    """
+    
     inv_dict = {}
     for k, v in old_dict.items():
         inv_dict [v] = inv_dict.get(v, [])

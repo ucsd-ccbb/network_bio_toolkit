@@ -21,6 +21,7 @@ import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import copy
 
 class Heat:
 
@@ -29,7 +30,7 @@ class Heat:
     def __init__(self, gene_type = 'symbol', species = 'human'):
     
         """
-        Initiates Heat class instance, initiating all instance variables to None.
+            Initiates Heat class instance, initiating all instance variables to None.
         """
         
         # User has to provide a gene type
@@ -85,6 +86,53 @@ class Heat:
         self.item_to_message['node_to_cluster'] = 'No cluster dictionary currently on file. Please run the following method:\n' \
                      + ' - Heat_instance.draw_clustering()\n' \
                      + 'Or assign your own using Heat_instance.node_to_cluster\n'
+                     
+                     
+    def copyHeat(self):
+    
+        """
+            Creates a deep copy of this analysis by initiating a new Upstream instance
+            and (deep) copying all instance variables to this new instance.
+        """
+
+        to_return = Heat(self.gene_type, self.species)
+        to_return.gene_type = self.gene_type
+        to_return.species = self.species
+        to_return.DEG_list = self.DEG_list
+        to_return.node_to_lfc = self.node_to_lfc
+        to_return.node_to_pvalue = self.node_to_pvalue
+        to_return.DG_universe = copy.deepcopy(self.DG_universe)
+        to_return.Wprime = copy.deepCopy(to_return.Wprime)
+        to_return.node_to_cluster = self.node_to_cluster
+        to_return.string_to_item = self.string_to_item
+        to_return.item_to_message = self.item_to_message
+
+        return to_return
+        
+            
+    def __repr__(self):
+        return self.create_to_string()
+        
+
+    def __str__(self):
+        return self.create_to_string()
+        
+
+    def create_to_string(self):
+    
+        """
+            Creates a string representation of this object by printing whether each of its
+            instance variables has been instanciated or not. If an instance variable has been 
+            instanciated, it will print the type of that variable.
+        """
+    
+        for item in ['gene_type', 'species', 'DEG_list', 'node_to_lfc', 'node_to_pvalue', 
+                     'DG_universe', 'Wprime', 'node_to_cluster']:
+            print (item + ': ')
+            exists = self.check_exists(item)
+            if exists == True:
+                print str(type(self.string_to_item[item])) + '\n'
+        return '\n'
 
             
 # ----------------------------- GETTERS AND SETTERS -------------------------- #
@@ -93,13 +141,13 @@ class Heat:
     def get(self, item):
     
         """
-        Use this function to access instance variable values, but not the actual instance variable
-        references. (aka, if you modify when this function returns, it will not modify the stored
-        version of that variable.)
-        
-        Arg:
-            item: String, name of the variable you'd like to access. (Look at heat_instance.item_to_message 
-                  if you are unsure.
+            Use this function to access instance variable values, but not the actual instance variable
+            references. (aka, if you modify when this function returns, it will not modify the stored
+            version of that variable.)
+            
+            Arg:
+                item: String, name of the variable you'd like to access. (Look at heat_instance.item_to_message 
+                      if you are unsure.
         """
 
         # check that the argument is valid, and update our dictionary
@@ -129,11 +177,11 @@ class Heat:
     def set(self, item, value):
     
         """
-        Use this function to update the value of an instance variable.
-        
-        Arg:
-            item: String, name of the variable you'd like to modify. (Look at heat_instance.item_to_message 
-                  if you are unsure.
+            Use this function to update the value of an instance variable.
+            
+            Arg:
+                item: String, name of the variable you'd like to modify. (Look at heat_instance.item_to_message 
+                      if you are unsure.
         """
 
         self.check_exists(item)
@@ -169,7 +217,8 @@ class Heat:
             + '- node_to_pvalue\n' \
             + '- DG_universe\n' \
             + '- Wprime\n' \
-            + '- node_to_cluster\n\n')
+            + '- node_to_cluster\n\n')    
+            
 
 
 #----------------------- LOAD NETWORK FUNCTIONS ---------------------------------#
@@ -184,13 +233,13 @@ class Heat:
                         sep = '\t'):
                         
         """
-        Use this function to access instance variable values, but not the actual instance variable
-        references. (aka, if you modify when this function returns, it will not modify the stored
-        version of that variable.)
-        
-        Args:
-            item: String, name of the variable you'd like to access. (Look at heat_instance.item_to_message 
-                  if you are unsure.
+            Use this function to access instance variable values, but not the actual instance variable
+            references. (aka, if you modify when this function returns, it will not modify the stored
+            version of that variable.)
+            
+            Args:
+                item: String, name of the variable you'd like to access. (Look at heat_instance.item_to_message 
+                      if you are unsure.
         """
 
         # make sure user has run all prerequisites
@@ -210,17 +259,14 @@ class Heat:
     def load_STRING_to_digraph(self, filename, confidence_filter = 400):
     
         """
-        This function loads a subset of the STRING database from either '9606.protein.actions.v10.5.txt' or
-        '10090.protein.actions.v10.5.txt' into a networkx digraph that can be used as the background network for 
-        the rest of our functions. IT ONLY KEEPS ACTIVATING AND INHIBITING EDGES FROM THE STRING NETWORK.
-        **Intended for Upstream Regulator Analysis functions.
+            This function loads a subset of the STRING database from either '9606.protein.actions.v10.5.txt' or
+            '10090.protein.actions.v10.5.txt' into a networkx digraph that can be used as the background network for 
+            the rest of our functions. IT ONLY KEEPS ACTIVATING AND INHIBITING EDGES FROM THE STRING NETWORK.
+            **Intended for Upstream Regulator Analysis functions.
 
-        Args:
-            filename: String, the filepath to the STRING database file.
-            confidence_filter: A number between 0 and 1000, all interactions with confidece less than this number will be filtered out
-
-        Returns: A Networkx DiGraph representation of the input STRING file
-
+            Args:
+                filename: String, the filepath to the STRING database file.
+                confidence_filter: A number between 0 and 1000, all interactions with confidece less than this number will be filtered out
         """
 
         # make sure user has run all prerequisites
@@ -234,21 +280,18 @@ class Heat:
     def load_ndex_from_server(self, UUID, relabel_node_field = None):
     
         """
-        This function loads an Ndex network as a networkx graph. This function can also filter the input database 
-        so that only the genes indicated by filter_list, and all of their out-going neighbors, will remain in the 
-        graph. This function is comparible to load_STRING_to_digraph().
+            This function loads an Ndex network as a networkx graph. This function can also filter the input database 
+            so that only the genes indicated by filter_list, and all of their out-going neighbors, will remain in the 
+            graph. This function is comparible to load_STRING_to_digraph().
 
-        Args:
-            UUID: String, the unique ID associated with the Ndex network you wish to load.
-                  Example: 'e11c6684-5ac2-11e8-a4bf-0ac135e8bacf' <-- STRING_human_protein_actions_confidence_700_edges network
-                           '76160faa-5d0f-11e8-a4bf-0ac135e8bacf' <-- STRING_mouse_protein_links_confidence_700_edges network
-                           
-            relabel_node_field: String, node attribute to relable the nodes in this graph with. Most Ndex graphs have a 'name' field
-                  that contains the gene name you are looking for for each node. (Sometimes the nodes themselves are named weirdly).
-                  In that case, set relabel_node_field = 'name'.
-
-        Returns: A Networkx representation of the input Ndex network
-
+            Args:
+                UUID: String, the unique ID associated with the Ndex network you wish to load.
+                      Example: 'e11c6684-5ac2-11e8-a4bf-0ac135e8bacf' <-- STRING_human_protein_actions_confidence_700_edges network
+                               '76160faa-5d0f-11e8-a4bf-0ac135e8bacf' <-- STRING_mouse_protein_links_confidence_700_edges network
+                               
+                relabel_node_field: String, node attribute to relable the nodes in this graph with. Most Ndex graphs have a 'name' field
+                      that contains the gene name you are looking for for each node. (Sometimes the nodes themselves are named weirdly).
+                      In that case, set relabel_node_field = 'name'.
         """
     
         # make sure user has run all prerequisites
@@ -262,19 +305,15 @@ class Heat:
     def load_STRING_links(self, filename, confidence_filter = 700):
     
         """
-        This function loads a subset of the STRING database from either '9606.protein.links.v10.5.txt' or
-        '10090.protein.links.v10.5.txt' into a networkx graph that can be used as the background network for 
-        the rest of our functions. **Intended for Heat Propogation and Clustering Analysis functions.
+            This function loads a subset of the STRING database from either '9606.protein.links.v10.5.txt' or
+            '10090.protein.links.v10.5.txt' into a networkx graph that can be used as the background network for 
+            the rest of our functions. **Intended for Heat Propogation and Clustering Analysis functions.
 
-        Args:
-            filename: String, the filepath to the STRING database file
-            confidence_filter: A number between 0 and 1000, all interactions with confidece less than this number will be filtered out
-            species: String, specify either 'human' or 'mouse', should match the specs of your differetial expression database
-            translate_to: String, specify either 'symbol' or 'entrez', should match the specs of your differetial expression database
-
-        Returns: 
-            G_str: A Networkx representation of the input STRING file
-
+            Args:
+                filename: String, the filepath to the STRING database file
+                confidence_filter: A number between 0 and 1000, all interactions with confidece less than this number will be filtered out
+                species: String, specify either 'human' or 'mouse', should match the specs of your differetial expression database
+                translate_to: String, specify either 'symbol' or 'entrez', should match the specs of your differetial expression database
         """
     
         # make sure user has run all prerequisites
@@ -290,17 +329,15 @@ class Heat:
 
     def normalized_adj_matrix(self):
     
-        '''
-        This function returns a normalized adjacency matrix.
+        """
+            This function returns a normalized adjacency matrix.
 
-        Inputs:
-            G: NetworkX graph from which to calculate normalized adjacency matrix
-            conserve_heat:
-                True: Heat will be conserved (sum of heat vector = 1).  Graph asymmetric
-                False:  Heat will not be conserved.  Graph symmetric.
-
-        Returns: numpy array of the normalized adjacency matrix.
-        '''
+            Inputs:
+                G: NetworkX graph from which to calculate normalized adjacency matrix
+                conserve_heat:
+                    True: Heat will be conserved (sum of heat vector = 1).  Graph asymmetric
+                    False:  Heat will not be conserved.  Graph symmetric.
+        """
     
         # make sure user has run all prerequisites
         if self.check_exists('DG_universe') == False: return None
@@ -316,23 +353,23 @@ class Heat:
                         node_font_size = 40,
                         **kwargs):
                         
-        '''
-        Implements and displays the network propagation for a given graph and seed
-        nodes. Additional kwargs are passed to visualizations and visJS_module.
+        """
+            Implements and displays the network propagation for a given graph and seed
+            nodes. Additional kwargs are passed to visualizations and visJS_module.
 
-        Inputs:
-            num_nodes: Int, the number of the hottest nodes to graph
-            edges_width: Int, width of edges in visualized network
-            node_size_multiplier: Int, number used to scale the size of all nodes inthe graph
-            largest_connected_component: Boolean, whether or not to display largest_connected_component.
-            physics_enabled: Boolean, True enables the physics simulation
-            node_font_size: Int, font size used to display the gene names of the seed nodes.
-            
-            ** See visJS2jupyter.visualizations.draw_heat_prop() and visJS2jupyter.visJS_module.visjs_network() for further
-            parameter options.
+            Inputs:
+                num_nodes: Int, the number of the hottest nodes to graph
+                edges_width: Int, width of edges in visualized network
+                node_size_multiplier: Int, number used to scale the size of all nodes inthe graph
+                largest_connected_component: Boolean, whether or not to display largest_connected_component.
+                physics_enabled: Boolean, True enables the physics simulation
+                node_font_size: Int, font size used to display the gene names of the seed nodes.
+                
+                ** See visJS2jupyter.visualizations.draw_heat_prop() and visJS2jupyter.visJS_module.visjs_network() for further
+                parameter options.
 
-        Returns: VisJS html network plot (iframe) of the heat propagation.
-        '''
+            Returns: VisJS html network plot (iframe) of the heat propagation.
+        """
     
         # make sure user has run all prerequisites
         for item in ['DG_universe', 'DEG_list', 'Wprime']:
@@ -377,29 +414,28 @@ class Heat:
                ):
                
         """
-        Creates a visJS2jupyter interactive network in a Jupyter notebook cell that separated the input graph into
-        clusters, and colors those clusters either to indicated which cluster they are in, or by log fold change.
-        
-        Args:
-            rad_positions: Boolean, True to separate nodes by cluster, False to leave intermixed
-            k: Float, parameter given to networkx.spring_layout() function. If in doubt, leave as None.
-            largest_connected_component: Boolean, True to visualize only the largest connected component, False to visualize all nodes.
-            alpha: Not currently in use. Functionality may be added later.
-            num_its: Not currently in use. Functionality may be added later. 
-            num_top_genes: Int, number of genes to visualize 
-            cluster_size_cut_off: Int, colors clusters below this size grey.
-            remove_stray_nodes: Int, remove clusters of size below cluster_size_cut_off from the visualization.
-            r: Float, radius of cluster separation (rad_positions must be True) 
-            x_offset: Int, helper that moves clusters around if some are laying on top of each other
-            y_offset: Int, helper that moves clusters around if some are laying on top of each other
-            node_spacing: Int, increase if there is a lot of overlap between nodes (will happen if there are many nodes in the graph)
-            node_size_multiplier: Int, scales the size of each node by this number
-            physics_enabled: Boolean, allow interactive, movable nodes and edges. rad_positions must be False.
-            node_font_size: Int, font size of the labels marking each seed node
-            graph_id: Int, change between visJS calls if you want to visualize multiple networkx int the same jupyter notebook
-  
-        Returns: The network that will be visualized in the jupyter notebook cell.
-
+            Creates a visJS2jupyter interactive network in a Jupyter notebook cell that separated the input graph into
+            clusters, and colors those clusters either to indicated which cluster they are in, or by log fold change.
+            
+            Args:
+                rad_positions: Boolean, True to separate nodes by cluster, False to leave intermixed
+                k: Float, parameter given to networkx.spring_layout() function. If in doubt, leave as None.
+                largest_connected_component: Boolean, True to visualize only the largest connected component, False to visualize all nodes.
+                alpha: Not currently in use. Functionality may be added later.
+                num_its: Not currently in use. Functionality may be added later. 
+                num_top_genes: Int, number of genes to visualize 
+                cluster_size_cut_off: Int, colors clusters below this size grey.
+                remove_stray_nodes: Int, remove clusters of size below cluster_size_cut_off from the visualization.
+                r: Float, radius of cluster separation (rad_positions must be True) 
+                x_offset: Int, helper that moves clusters around if some are laying on top of each other
+                y_offset: Int, helper that moves clusters around if some are laying on top of each other
+                node_spacing: Int, increase if there is a lot of overlap between nodes (will happen if there are many nodes in the graph)
+                node_size_multiplier: Int, scales the size of each node by this number
+                physics_enabled: Boolean, allow interactive, movable nodes and edges. rad_positions must be False.
+                node_font_size: Int, font size of the labels marking each seed node
+                graph_id: Int, change between visJS calls if you want to visualize multiple networkx int the same jupyter notebook
+      
+            Returns: The network that will be visualized in the jupyter notebook cell.
         """
 
         # make sure user has run all prerequisites
@@ -436,13 +472,12 @@ class Heat:
     def cluster_legend(self, cluster_size_cut_off = 5):
     
         """
-        This draws a matplotlib legend displaying the colors associated with each cluster
+            This draws a matplotlib legend displaying the colors associated with each cluster
 
-        Args:
-            cluster_size_cut_off: Int, colors clusters below this size grey.
+            Args:
+                cluster_size_cut_off: Int, colors clusters below this size grey.
 
-        Returns: A matplotlib figure
-
+            Returns: A matplotlib figure
         """
     
         # make sure user has run all prerequisites
@@ -475,16 +510,15 @@ class Heat:
     def draw_legend(self, vmin, vmax, cmap = mpl.cm.bwr, label = 'Units'):
     
         """
-        This draws a colormap in a cell that is colored with cmap and ranges from vmin to vmax. 
+            This draws a colormap in a cell that is colored with cmap and ranges from vmin to vmax. 
 
-        Args:
-            vmin: Int, the minimum value to display in the colormap
-            vmax: Int, the maximum value to display in the colormap
-            cmap: matplotlib colormap, used to color the colorbar
-            label: String, the text to display below the colorbar
+            Args:
+                vmin: Int, the minimum value to display in the colormap
+                vmax: Int, the maximum value to display in the colormap
+                cmap: matplotlib colormap, used to color the colorbar
+                label: String, the text to display below the colorbar
 
-        Returns: A matplotlib colorbar
-
+            Returns: A matplotlib colorbar
         """
     
         heat_and_cluster.draw_legend(vmin, vmax, cmap, label)
@@ -496,13 +530,10 @@ class Heat:
     def write_cluster_table(self, to_write_filename):
     
         """
-        Writes all of the information we ahve collected in this analysis (gene, cluster id, seed nodes Y/N, log fold change, and p-value).
+            Writes all of the information we ahve collected in this analysis (gene, cluster id, seed nodes Y/N, log fold change, and p-value).
 
-        Args:
-            to_write_filename: String, the file to write the table to.
-
-        Returns: N/A
-
+            Args:
+                to_write_filename: String, the file to write the table to.
         """
     
         # make sure user has run all prerequisites
@@ -536,14 +567,11 @@ class Heat:
     def check_exists(self, item):
     
         """
-        Helper functions used to help guide the user as to which order they should call the analysis functions.
-        Checks whether the named instance variable has been set yet.
+            Helper functions used to help guide the user as to which order they should call the analysis functions.
+            Checks whether the named instance variable has been set yet.
 
-        Args:
-            item: String, name of the instance variable whose existance we are checking.
-   
-        Returns: N/A
-
+            Args:
+                item: String, name of the instance variable whose existance we are checking.
         """
 
         # re-map it so it stays up to date

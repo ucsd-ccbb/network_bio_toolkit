@@ -126,6 +126,12 @@ class PrepGsea:
         self.comparison_col_button = comparison_form.children[0].children[1]
         
     def choose_two_classes(self):
+    
+        """
+            Creates two drop down widget for the user to mark which two options they would
+            like to be their two comparison classes.
+            
+        """
         
         print 'Please specify the two classes you wish to compare for class \"' + str(self.comparison_col_button.value) + '\".\n\n' \
                      + 'Do not reload cell after indicating your choices.\n' \
@@ -163,6 +169,11 @@ class PrepGsea:
         self.class_B_textbox = classes_form.children[1].children[1] # class B
         
     def choose_controls(self):
+    
+        """
+            Creates a drop down widget for every left-over column in the dataframe, 
+            and asked the user to specify a control value for each column. 
+        """
         
         self.class_A = self.class_A_textbox.value
         self.class_B = self.class_B_textbox.value
@@ -203,6 +214,12 @@ class PrepGsea:
             self.controls_widget_array.append(child.children[1])
                 
     def filter_metafile(self):
+    
+        """
+            Filters the metafile using the comparisons and controls you have specified.
+            Will print which comparisons and controls it is using, so you can see if 
+            something went wrong.
+        """
         
         # self.controls doesn't exist yet if you are not loading analysis from files
         try:
@@ -243,6 +260,12 @@ class PrepGsea:
         display(self.df_meta)
         
     def filter_expression_file(self, sample_col_name = 'Sample_name'):
+    
+        """
+            Filters the expression file using the filtered metafile, comparisons, and controls you have specified.
+            Will print which comparisons and controls it is using, so you can see if 
+            something went wrong.
+        """
         
         # remember sample_col_name
         self.sample_col_name = sample_col_name
@@ -293,6 +316,11 @@ class PrepGsea:
               permutation_num = 100, # reduce number to speed up test
               weighted_score_type = 1,  # default: 1
              ):
+             
+        """
+            Makes the GSEA call. Your filtered expression file is automatically passed
+            into the function call.
+        """
     
         print "This may take a few minutes.\n"
         self.gs_res = gp.gsea(data = self.df_expression, 
@@ -313,6 +341,17 @@ class PrepGsea:
         return self.gsea_df.head()
 
     def load_gsea_from_file(self, filename_gsea_output, filename_anal_info):
+    
+        """
+            Makes the GSEA call. Your filtered expression file is automatically passed
+            into the function call.
+            
+            Args:
+                filename_gsea_output: String, the filepath to the GSEA output of your GSEA call you'd
+                    like to load. (output_dir + '/gseapy.gsea.gene_set.report.csv' from the PrepGsea analysis you are trying to load.)
+                filename_anal_info: String, the filepath to the extra info output of your GSEA call you'd
+                    like to load. (output_dir + '/extra_gsea_info.txt' from the PrepGsea analysis you are trying to load.)
+        """
 
         # load gsea output
         df_gsea = pd.read_csv(filename_gsea_output)
@@ -335,6 +374,10 @@ class PrepGsea:
                 self.controls[term] = value
     
     def plot_gsea(self, style_content = 'ggplot', top = 20, y = 'fdr', x = 'Term', fontsize = 8):
+    
+        """
+            Plots a bar graph of the pathways with the top values for the catergory specified by parameter y.
+        """
             
         print 'Filtering metafile by the following classes and controls:\n\n' \
         + 'class name: ' + str(self.class_name) + '\n' \
@@ -353,6 +396,11 @@ class PrepGsea:
             gsea_results.head(top).plot.barh(y = y, x = x, fontsize = fontsize)
             
     def plot_individual_pathway_heatmap(self, focal_term):
+    
+        """
+           Plots a heat map of the top 50 genes associated with the specified pathway, 
+           by sample.
+        """
             
         print 'Filtering metafile by the following classes and controls:\n\n' \
         + 'class name: ' + str(self.class_name) + '\n' \
@@ -376,7 +424,7 @@ class PrepGsea:
                 focal_genes = focal_genes[-50:]
 
 
-        self.df_meta.index=self.df_meta['Sample_name']
+        self.df_meta.index = self.df_meta['Sample_name']
 
         cols_to_plot = self.df_meta.index.tolist()
 
@@ -398,7 +446,7 @@ class PrepGsea:
         idx_sort = (E_samps_norm[idx_cond1].mean(axis = 1) - E_samps_norm[idx_cond2].mean(axis = 1)).sort_values().index.tolist()
         E_samps_norm = E_samps_norm.loc[idx_sort]
 
-        g=sns.clustermap(E_samps_norm, cmap = 'bwr', vmin = -2, vmax = 2, method='ward', figsize = (4,12), 
+        g = sns.clustermap(E_samps_norm, cmap = 'bwr', vmin = -2, vmax = 2, method = 'ward', figsize = (4,12), 
                          z_score = 0, col_colors = col_colors, col_cluster = False, row_cluster = False)
 
         g.data2d.head()
@@ -424,6 +472,11 @@ class PrepGsea:
     #--------------------------------- HELPER FUNCTIONS ---------------------------------#
         
     def checkbox_maker(self, descriptions):
+    
+        """
+            Helper function that creates a box with multiple checkbox widgets in it.
+        """
+        
         options_dict = {description: widgets.Checkbox(description=description, style = {'description_width': 'initial'}, value=False) for description in descriptions}
         options = [options_dict[description] for description in descriptions]
         options_widget = widgets.VBox(options, layout={'overflow': 'scroll'})
@@ -431,17 +484,34 @@ class PrepGsea:
         return multi_select
 
     def get_values(self, checkboxes):
+        
+        """
+            Gets the checked values from the checkboxes made from checkbox_maker().
+        """
+        
         selected_pipelines = [widget.description for widget in checkboxes.children[0].children if widget.value]
         return selected_pipelines
 
     def check_list(self, curr_list):
+    
+        """
+            Checks if every entry in a list is the same.
+        """
+        
         first = curr_list[0]
         for obj in curr_list:
             if obj != first:
-                return True
-        return False
+                return True # if there is a single entry that is different, we're good
+        return False # if every single entry matched the first, they are all the same
     
     def save_info_to_file(self):
+    
+        """
+            Writes the extra information generated from this analysis (control and comparison columns and values)
+            to the filepath output_dir + '/extra_gsea_info.txt', so that this information could be reused in 
+            future analyses.
+        """
+        
 
         # default files to save this analysis to
         filename_gsea_output = self.output_dir + '/gseapy.gsea.gene_set.report.csv'

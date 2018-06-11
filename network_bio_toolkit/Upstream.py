@@ -7,14 +7,20 @@ Date: 2/5/18
 
 import create_graph
 reload(create_graph)
+
 import stat_analysis
 reload(stat_analysis)
+
 import matplotlib.pyplot as plt
 import copy
 
 class Upstream:
 
     def __init__(self, gene_type = 'symbol', species = 'human'):
+    
+        """
+            Initiates Upstream class instance, initiating all instance variables to None.
+        """
 
         # User has to provide a gene type
         if (gene_type != 'entrez') & (gene_type != 'symbol'):
@@ -104,6 +110,11 @@ class Upstream:
                              + 'Or assign your own using self.z_score\n'
 
     def copyUpstream(self):
+    
+        """
+            Creates a deep copy of this analysis by initiating a new Upstream instance
+            and (deep) copying all instance variables to this new instance.
+        """
 
         to_return = Upstream(self.gene_type, self.species)
 
@@ -136,6 +147,13 @@ class Upstream:
         return self.create_to_string()
 
     def create_to_string(self):
+    
+        """
+            Creates a string representation of this object by printing whether each of its
+            instance variables has been instanciated or not. If an instance variable has been 
+            instanciated, it will print the type of that variable.
+        """
+    
         for item in ['gene_type', 'species', 'TF_list', 'DG_universe', 'DG_TF', 'DEG_list', 'DEG_filename',
                      'DEG_to_pvalue', 'DEG_to_updown', 'DEG_full_graph', 'tf_target_enrichment',
                      'tf_enrichment', 'z_scores']:
@@ -151,6 +169,16 @@ class Upstream:
 
     # to ask to see a variable
     def get(self, item):
+    
+        """
+            Use this function to access instance variable values, but not the actual instance variable
+            references. (aka, if you modify when this function returns, it will not modify the stored
+            version of that variable.)
+            
+            Args:
+                item: String, name of the variable you'd like to access. (Look at ura_instance.item_to_message 
+                      if you are unsure.
+        """
 
         # check that the argument is valid, and update our dictionary
         exists = self.check_exists(item)
@@ -177,6 +205,14 @@ class Upstream:
 
     # to set the value of a variable
     def set(self, item, value):
+    
+        """
+            Use this function to update the value of an instance variable.
+            
+            Args:
+                item: String, name of the variable you'd like to modify. (Look at ura_instance.item_to_message 
+                      if you are unsure.
+        """
 
         self.check_exists(item)
 
@@ -229,6 +265,21 @@ class Upstream:
 
     def easy_load_TF_list(self, csv_filename, jaspar = True, TRED = True, ITFP = True, ENCODE = True, 
                           Neph2012 = True, TRRUST = True, Marbach2016 = True):
+                          
+        """
+            Loads a list of transcription factors (TF) containing genes from the user specified databases.
+
+            Args:
+                csv_filename: String, filepath of where to find TF data ('../../TF_databases/TF_database_URA.csv' if you are using our 
+                    github directory structure)
+                jaspar: Boolean, whether or not to include jaspar database in TF list
+                TRED: Boolean, whether or not to include TRED database in TF list
+                ITFP: Boolean, whether or not to include ITFP database in TF list
+                ENCODE: Boolean, whether or not to include ENCODE database in TF list
+                Neph2012: Boolean, whether or not to include Neph2012 database in TF list
+                TRRUST: Boolean, whether or not to include TRRUST database in TF list
+                Marbach2016: Boolean, whether or not to include Marbach2016 database in TF list
+        """
 
         # make sure user has run all prerequisites
         for item in ['gene_type', 'species']:
@@ -243,6 +294,20 @@ class Upstream:
 
 
     def load_small_STRING_to_digraph(self, filename): # TODO: check if we can entrez/species
+    
+        """
+            ** This is a depricated function that may not be compatible with the rest of our functions
+        
+            This function loads a small subset of the STRING database into a networkx digraph that can be used as input
+            into the rest of our functions. This function filters the input database so that only the genes
+            indicated by TF_list, and all of their out-going neighbors, will remain in the graph. Namely, the only
+            source nodes left in the graph will be the genes in TF_list.
+
+            ** Note that there is a loss of 110 our of about 40000 edges due to removal of multiedges **
+
+            Args:
+                filename: String, the path to the string file
+        """
 
         # make sure user has run all prerequisites
         if self.check_exists('TF_list') == False:
@@ -253,7 +318,20 @@ class Upstream:
         self.DG_universe = DG_universe
 
 
-    def load_STRING_to_digraph(self, filename, confidence_filter=400):
+    def load_STRING_to_digraph(self, filename, confidence_filter = 400):
+    
+        """
+            This function loads a subset of the STRING database from either '9606.protein.actions.v10.5.txt' or
+            '10090.protein.actions.v10.5.txt' into a networkx digraph that can be used as the background network for 
+            the rest of our functions. IT ONLY KEEPS ACTIVATING AND INHIBITING EDGES FROM THE STRING NETWORK. This 
+            function filters the input database so that only the genes indicated by TF_list, and all of their 
+            out-going neighbors, will remain in the graph. Namely, the only source nodes left in the graph will be the 
+            genes in TF_list.
+
+            Args:
+                filename: String, the filepath to the STRING database file.
+                confidence_filter: A number between 0 and 1000, all interactions with confidece less than this number will be filtered out
+        """
 
         # make sure user has run all prerequisites
         for item in ['TF_list', 'gene_type', 'species']:
@@ -263,6 +341,32 @@ class Upstream:
         DG_TF, DG_universe = create_graph.load_STRING_to_digraph(filename, self.TF_list, confidence_filter, self.gene_type, self.species)
         self.DG_TF = DG_TF
         self.DG_universe = DG_universe
+        
+    
+    def load_ndex_from_server(self, UUID, relabel_node_field = None):
+    
+        """
+            This function loads an Ndex network as a networkx graph. This function can also filter the input database 
+            so that only the genes indicated by filter_list, and all of their out-going neighbors, will remain in the 
+            graph. This function is comparible to load_STRING_to_digraph().
+
+            Args:
+                UUID: String, the unique ID associated with the Ndex network you wish to load.
+                      Example: 'e11c6684-5ac2-11e8-a4bf-0ac135e8bacf' <-- STRING_human_protein_actions_confidence_700_edges network
+                               '76160faa-5d0f-11e8-a4bf-0ac135e8bacf' <-- STRING_mouse_protein_links_confidence_700_edges network
+                               
+                relabel_node_field: String, node attribute to relable the nodes in this graph with. Most Ndex graphs have a 'name' field
+                      that contains the gene name you are looking for for each node. (Sometimes the nodes themselves are named weirdly).
+                      In that case, set relabel_node_field = 'name'.
+        """
+    
+        # make sure user has run all prerequisites
+        for item in ['gene_type', 'species']:
+            if self.check_exists(item) == False:
+                return
+    
+        DG_universe = create_graph.load_ndex_from_server(UUID, relabel_node_field, None)
+        self.DG_universe = DG_universe
 
 
 
@@ -270,16 +374,36 @@ class Upstream:
     # --------------------- DEG LOAD FUNCTIONS ---------------------------#
 
 
-    def create_DEG_list(self, filename,
+    def create_DEG_list(self, 
+                        filename,
+                        p_value_filter = 0.05,
+                        p_value_or_adj = 'adj',  # filtering by p-value ('p') or adjusted p-value ('adj')
+                        fold_change_filter = None,  # specify a number to filter by absolute (log) fold change
+                        gene_column_header = None,
+                        p_value_column_header = None,
+                        fold_change_column_header = None,
+						sep = '\t',
+                        return_full_values = False):
+                        
+        """
+            This function takes a differential expression data file and loads it into multiple dictionaries 
+            that can be used by our other functions. Differential expression file must contain a gene name column, 
+            a (log) fold change column, and an (adjusted) p-value column, each specified with a common column header.
+            If your column header for any of these columns is not intuitive, specify the name of that column header.
+            Each line in your input file should represent a different gene.
 
-                        p_value_filter=0.05,
-                        p_value_or_adj='adj',  # filtering by p-value ('p') or adjusted p-value ('adj')
-                        fold_change_filter=None,  # specify a number to filter by absolute (log) fold change
-
-                        gene_column_header=None,
-                        p_value_column_header=None,
-                        fold_change_column_header=None,
-						sep = '    '):
+            Args:
+                filename: String, filepath to the the differential expression input file
+                p_value_filter: Float, typically a number between 0 and 1, the number to filter the adjusted p-vlaue by. Will remove all above this threshold
+                p_value_or_adj: String, either 'p' or 'adj', that specifies whether we should use p-value or adjusted p-value information
+                fold_change_filter: Float/Int, will filter out genes with fold change absolute value greater than this number
+                gene_column_header: String, if your gene name column header is not intuitive, specify it here
+                p_value_column_header: String, if your p-value column header is not intuitive, specify it here
+                fold_change_column_header: String, if your fold change column header is not intuitive, specify it here
+                sep: String, separating agent in your input file. Common exmaples include '\t' and ','
+                return_full_values: Boolean, specifies whether to return only Differentially Expressed Genes' p-value and log fold
+                    information, or whether to return entire file's information.
+        """
 
         # make sure user has run all prerequisites
         for item in ['DG_TF', 'gene_type', 'species']:
@@ -288,7 +412,9 @@ class Upstream:
 
         # create the DEG list with specified cut-offs
         DEG_list, DG_TF = create_graph.create_DEG_list(filename, self.DG_TF, p_value_filter, p_value_or_adj,
-                                                       fold_change_filter, self.gene_type, gene_column_header, p_value_column_header, fold_change_column_header, sep)
+                                                       fold_change_filter, self.gene_type, gene_column_header, 
+                                                       p_value_column_header, fold_change_column_header, sep,
+                                                       return_full_values)
 
         self.DEG_list = DEG_list
         self.DEG_filename = filename
@@ -297,11 +423,11 @@ class Upstream:
 
         # create the full graph (call same function but just don't filter it)
         DEG_full_graph, DEG_to_pvalue, DEG_to_updown = create_graph.create_DEG_full_graph(filename,
-                                                                                          p_value_or_adj=p_value_or_adj,
+                                                                                          p_value_or_adj = p_value_or_adj,
                                                                                           gene_type = self.gene_type,
-                                                                                          gene_column_header=gene_column_header,
-                                                                                          p_value_column_header=p_value_column_header,
-                                                                                          fold_change_column_header=fold_change_column_header,
+                                                                                          gene_column_header = gene_column_header,
+                                                                                          p_value_column_header = p_value_column_header,
+                                                                                          fold_change_column_header = fold_change_column_header,
                                                                                           sep = sep
                                                                                           )
         self.DEG_full_graph = DEG_full_graph
@@ -315,6 +441,15 @@ class Upstream:
 
 
     def tf_target_enrichment_calc(self):
+    
+        """
+            Our p-value function calculates the log of the p-value for every TF in the graph using [scipy.stats.hypergeom.logsf]
+            (https://docs.scipy.org/doc/scipy-0.19.1/reference/generated/scipy.stats.hypergeom.html). These values help us
+            determine which TF's are actually associated with our DEG's. If a TF is given a high value (because we are
+            working with logs, not straight p-values), then it is likely that there is correlation between that TF and its
+            DEG targets. Therefore, it is likely that TF is responsible for some of our observed gene expression.
+            Note that if a TF is given a value of zero, that means none of the TF's targets were DEG's.
+        """
 
         # make sure user has run all prerequisites
         for item in ['DG_TF', 'DG_universe', 'DEG_list']:
@@ -326,6 +461,13 @@ class Upstream:
 
 
     def tf_enrichment_calc(self):
+    
+        """
+            Our p-value function calculates the log of the p-value [scipy.stats.hypergeom.logsf] for all TF's in this analysis.
+            (https://docs.scipy.org/doc/scipy-0.19.1/reference/generated/scipy.stats.hypergeom.html). This function generates
+            a single value that represents how enriched the set of TF's is. If the p-value is high, then the set of TF's is enriched.
+            (We are working with logs, not straight p-values)
+        """
 
         # make sure user has run all prerequisites
         for item in ['TF_list', 'DEG_full_graph', 'DEG_list']:
@@ -339,7 +481,27 @@ class Upstream:
 
     # --------------------- Z-SCORE FUNCTIONS --------------------------- #
 
-    def tf_zscore(self, bias_filter=0.25):
+    def tf_zscore(self, bias_filter = 0.25):
+    
+        """
+            The goal of our z-score function is to predict the activation states of the TF's. We observe how a TF relates
+            to each of its targets to make our prediction. We compare each targets' observed gene regulation (either up or
+            down) and each TF-target interaction (whether it is activating or inhibiting) to conclude whether a TF is
+            activating or inhibiting. A positive value indicates activating while a negative value indicates inhibiting.
+            A value of zero means that we did not have enough information about the target or TF-target interaction to
+            make the prediction.
+
+            This function call one of two helper z-score functions, either bias_corrected_tf_zscore or not_bias_corrected_tf_zscore,
+            based on how biased the graph is (indicated by the bias_filter parameter). The "bias" of the graph is a number that
+            indicates if the graph has notibly more activating or inhibiting edges, and to what degree. It is calculated using our
+            calculate_bias function.
+
+            **If the user wishes to explicitly use the biased z-score formula (bias_corrected_tf_zscore), set bias_filter to 0.
+            For the unbiased formula (not_bias_corrected_tf_zscore), set bias_filter to 1.
+
+            Args:
+                bias_filter: number between 0 and 1, threshold to calculate z-score using biased formula
+        """
 
         # make sure user has run all prerequisites
         for item in ['DG_TF', 'DEG_list']:
@@ -352,7 +514,20 @@ class Upstream:
 
     # --------------------- DISPLAY FUNCTIONS --------------------------- #
 
-    def top_values(self, act=True, abs_value=False, top=10):
+    def top_values(self, act = True, abs_value = False, top = 10):
+    
+        """
+            This function returns a sorted Pandas Series of the top (number indicated by top) genes based off z-score
+            (given by z_score_series).
+
+            Args:
+                act: Boolean, True to sort by most positive z-score, False to sort by most negative. Ignored if abs_value
+                    is True
+                abs_value: Boolean, True to sort by absolute z-score, False otherwise
+                top: the number of genes you wish to have returned
+
+            Returns: A sorted Pandas Dataframe of the top genes, mapping each gene to its z-score
+        """
 
         # make sure user has run all prerequisites
         for item in ['z_scores', 'DEG_to_pvalue', 'DEG_to_updown']:
@@ -362,44 +537,101 @@ class Upstream:
         return stat_analysis.top_values(self.z_scores, self.DEG_to_pvalue, self.DEG_to_updown, act, abs_value, top)
 
 
-    def compare_genes(self, genes_to_rank, fig_size=(12, 7), font_size=12, anno_vert_dist=0.025):
+    def compare_genes(self, genes_to_rank, fig_size = (12,7), font_size = 12, anno_vert_dist = 0.025):
+    
+        """
+            Plots a histogram of the distribution of z-scores, and marks the genes indicated in genes_to_rank
+            so that their values can be visually compared.
+
+            Args:
+                genes_to_rank: List, genes you wish to highlight in the distribution
+                fig_size: (Int,Int), the dimensions of the histogram.
+                font_size: Int, the font size of the genes_to_rank labels
+                anno_vert_dist: Float, the distance separating the genes_to_rank labels from the x-axis
+
+            Returns: A seaborn based histogram.
+        """
 
         # make sure user has run all prerequisites
         if self.check_exists('z_scores') == False:
             return -1
 
-        stat_analysis.compare_genes(self.z_scores, genes_to_rank, fig_size=fig_size, font_size=font_size, anno_vert_dist=anno_vert_dist)
+        stat_analysis.compare_genes(self.z_scores, genes_to_rank, fig_size = fig_size, font_size = font_size, anno_vert_dist = anno_vert_dist)
 
 
     def vis_tf_network(self, tf,
-                       directed_edges=False,
-                       node_spacing=2200,
-                       color_non_DEGs=False,
-                       color_map=plt.cm.bwr,
-                       graph_id=0,
+                       directed_edges = False,
+                       node_spacing = 2200,
+                       color_non_DEGs = False,
+                       color_map = plt.cm.bwr,
+                       graph_id = 0,
                        tf_size_amplifier = 8,
 					   alpha = 1.0, 
 				       color_vals_transform = None,
-				       ceil_val=10,
+				       ceil_val = 10,
                        color_max_frac = 1.0,
 				       color_min_frac = 0.0,
-				       vmin=None,
-				       vmax=None,
+				       vmin = None,
+				       vmax = None,
 					   tf_shape = 'star'
                        ):
+                       
+        """
+            This fuction visualizes the network consisting of one transcription factor and its downstream regulated genes. Nodes are colored with 
+            a shade of blue or red calculated based on the fold change of each gene given in the file DEG_filename. Red is up-regulated. Blue is 
+            down-regulated. White nodes did not have enough information. Darker red/blue indicates a stronger (larger absolute value) fold change 
+            value. Node size is deterined by adjusted p-value, also from DEG_filename. Larger nodes have a more significant p-value. Nodes from 
+            DEG_list will have a black border. Activating edges are red. Inhibiting edges are blue. 
+
+            Args:
+                tf: String, all caps gene symbol of the regulator whose sub-network you wish to visualizes
+                directed_edges: Boolean, True to include directional arrows on edges, False otherwise 
+                node_spacing: Int, increase this number if your nodes are too close together (for a graph with many nodes) or decrease 
+                    if they are too far apart (for a graph with fewer nodes) 
+                color_non_DEGs: Boolean, True will color all nodes in graph with their log fold change, False will leave non-DEG genes grey.
+                color_map: matplotlib.cm.*, a matplotlib colormap
+                graph_id: Int, change this number to display multiple graphs in one notebook
+                tf_size_amplifier: Int, size multiplier applied only to the transcription factor
+                alpha: Float, alpha parameter to visJS_module.return_node_to_color()
+                color_vals_transform: String, function name. Either 'log', 'sqrt', 'ceil', or 'None'. 
+                    color_vals_transform parameter to visJS_module.return_node_to_color()
+                ceil_val: Float, value cut-off for data. ceil_val parameter to visJS_module.return_node_to_color()
+                color_max_frac: Float, color_max_frac parameter to visJS_module.return_node_to_color()
+                color_min_frac: Float, color_min_frac parameter to visJS_module.return_node_to_color()
+                vmin: Float, vmin parameter to visJS_module.return_node_to_color()
+                vmax: Float, vmax parameter to visJS_module.return_node_to_color()
+                tf_shape: String, ex. 'star', 'circle', 'dot'... Shape to set transcription factor
+
+            Returns: HTML output that will display an interactive network in a jupyter notebooks cell.
+        """
 
         # make sure user has run all prerequisites
         for item in ['DG_TF', 'DEG_list', 'DEG_to_pvalue', 'DEG_to_updown']:
             if self.check_exists(item) == False:
                 return -1
 
-        return stat_analysis.vis_tf_network(self.DG_TF, tf, self.DEG_list, self.DEG_to_pvalue, self.DEG_to_updown, directed_edges, node_spacing, color_non_DEGs, color_map, graph_id, tf_size_amplifier, alpha = alpha, color_vals_transform = color_vals_transform,
-                                            ceil_val = ceil_val, color_max_frac = color_max_frac, color_min_frac = color_min_frac, vmin = vmin, vmax = vmax, tf_shape = tf_shape)
+        return stat_analysis.vis_tf_network(self.DG_TF, tf, self.DEG_list, self.DEG_to_pvalue, self.DEG_to_updown, 
+                                            directed_edges, node_spacing, color_non_DEGs, color_map, graph_id, 
+                                            tf_size_amplifier, alpha = alpha, color_vals_transform = color_vals_transform,
+                                            ceil_val = ceil_val, color_max_frac = color_max_frac, 
+                                            color_min_frac = color_min_frac, vmin = vmin, vmax = vmax, tf_shape = tf_shape)
 
 
 
 
     def to_csv(self, out_filename):
+    
+        """
+            Outputs information gathered from URA Analysis to a single csv file.
+
+            Args:
+                out_filename: String, filepath to write to.
+                z_score_series: Pandas series, z-scores obtained from calling tf_zscore()
+                DEG_to_pvalue: Dict, maps gene names to their (adj) p-values found in the expression file
+                DEG_to_updown: Dict, maps gene names to their (log) fold change found in the expression file
+                tf_target_enrichment:Pandas series, p-values obtained from calling tf_pvalues()
+                DG_TF: Networkx, String network filtered by transcription factors, output of create_graph.load_STRING_to_digraph()
+        """
 
         # make sure user has run all prerequisites
         for item in ['z_scores', 'DEG_to_pvalue', 'DEG_to_updown', 'tf_target_enrichment', 'DG_TF']:
@@ -414,6 +646,14 @@ class Upstream:
 
     # item must not be strign version
     def check_exists(self, item):
+    
+        """
+            Helper functions used to help guide the user as to which order they should call the analysis functions.
+            Checks whether the named instance variable has been set yet.
+
+            Args:
+                item: String, name of the instance variable whose existance we are checking.
+        """
 
         # re-map it so it stays up to date
         self.string_to_item['gene_type'] = self.gene_type

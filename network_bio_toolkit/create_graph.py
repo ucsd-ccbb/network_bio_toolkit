@@ -20,7 +20,7 @@ def easy_load_TF_list(csv_filename = '../../TF_databases/TF_database_URA.csv', j
                       Neph2012 = True, TRRUST = True, Marbach2016 = True, species = 'human', gene_type = 'symbol'):
                       
     """
-        Loads returns a list of transcription factors (TF) containing genes from the user specified databases.
+        Returns a list of transcription factors (TF) containing genes from the user specified databases.
 
         Args:
             csv_filename: String, filepath of where to find TF data ('../../TF_databases/TF_database_URA.csv' if you are using our 
@@ -136,7 +136,7 @@ def load_STRING_to_digraph(filename, TF_list = None, confidence_filter = 700, ge
         the rest of our functions. IT ONLY KEEPS ACTIVATING AND INHIBITING EDGES FROM THE STRING NETWORK. This 
         function can also filter the input database so that only the genes indicated by TF_list, and all of their 
         out-going neighbors, will remain in the graph. Namely, the only source nodes left in the graph will be the 
-        genes in TF_list. ** Intende for Upstream Regulator Analysis functions.
+        genes in TF_list. ** Intended for Upstream Regulator Analysis functions.
 
         Args:
             filename: String, the filepath to the STRING database file.
