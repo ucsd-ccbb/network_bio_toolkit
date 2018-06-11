@@ -366,7 +366,6 @@ def top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = True, abs_val
             top: the number of genes you wish to have returned
 
         Returns: A sorted Pandas Dataframe of the top genes, mapping each gene to its z-score
-
     """
     
     # top activating and inhibiting, sort by strongest zscore or log(pvalue)
@@ -416,7 +415,6 @@ def compare_genes(z_scores, genes_to_rank, fig_size = (12, 7), font_size = 12, a
             anno_vert_dist: Float, the distance separating the genes_to_rank labels from the x-axis
 
         Returns: A seaborn based histogram.
-
     """
 
     # We don't want to plot the zero z-scores
@@ -458,8 +456,6 @@ def compare_genes(z_scores, genes_to_rank, fig_size = (12, 7), font_size = 12, a
                     verticalalignment = 'bottom',
                     fontsize=font_size)
 
-
-
 		
 def vis_tf_network(DG, tf, DEG_list,
                    DEG_to_pvalue, DEG_to_updown,
@@ -488,43 +484,25 @@ def vis_tf_network(DG, tf, DEG_list,
 
         Args:
             DG: Networkx graph, your (potentially TF-filtered) background networkx
-            
             tf: String, all caps gene symbol of the regulator whose sub-network you wish to visualizes
-            
             DEG_list: List, list of DEG's as strings, output of create_graph.creat_DEG_list
-            
             DEG_to_pvalue: Dict, maps gene names to their (adj) p-values found in the expression file
-            
             DEG_to_updown: Dict, maps gene names to their (log) fold change found in the expression file
-            
             directed_edges: Boolean, True to include directional arrows on edges, False otherwise
-            
             node_spacing: Int, increase this number if your nodes are too close together (for a graph with many nodes) or decrease 
                 if they are too far apart (for a graph with fewer nodes)
-                
             color_non_DEGs: Boolean, True will color all nodes in graph with their log fold change, False will leave non-DEG genes grey.
-            
             color_map: matplotlib.cm.*, a matplotlib colormap
-            
             graph_id: Int, change this number to display multiple graphs in one notebook
-            
             tf_size_amplifier: Int, size multiplier applied only to the transcription factor
-            
             alpha: Float, alpha parameter to visJS_module.return_node_to_color()
-            
             color_vals_transform: String, function name. Either 'log', 'sqrt', 'ceil', or 'None'. 
                 color_vals_transform parameter to visJS_module.return_node_to_color()
-                
             ceil_val: Float, value cut-off for data. ceil_val parameter to visJS_module.return_node_to_color()
-            
             color_max_frac: Float, color_max_frac parameter to visJS_module.return_node_to_color()
-            
             color_min_frac: Float, color_min_frac parameter to visJS_module.return_node_to_color()
-			
             vmin: Float, vmin parameter to visJS_module.return_node_to_color()
-			
             vmax: Float, vmax parameter to visJS_module.return_node_to_color()
-			
             tf_shape: String, ex. 'star', 'circle', 'dot'... Shape to set transcription factor
 
         Returns: HTML output that will display an interactive network in a jupyter notebooks cell.
@@ -644,9 +622,6 @@ def to_csv(out_filename, z_score_series, DEG_to_pvalue, DEG_to_updown, tf_target
             DEG_to_updown: Dict, maps gene names to their (log) fold change found in the expression file
             tf_target_enrichment:Pandas series, p-values obtained from calling tf_pvalues()
             DG_TF: Networkx, String network filtered by transcription factors, output of create_graph.load_STRING_to_digraph()
-
-        Returns: N/A
-
     """
     
     top_overall = top_values(z_score_series, DEG_to_pvalue, DEG_to_updown, act = False, abs_value = True,
