@@ -204,6 +204,7 @@ def draw_clustering(DG_universe, seed_nodes,
            'color':node_to_color[n],
            'node_shape':node_shape[n],
            'node_label':node_labels[n],
+            'node_full_label':str(n),
            'title':node_titles[n],
            'x':pos[n][0]*node_spacing,
            'y':pos[n][1]*node_spacing} for n in nodes]
