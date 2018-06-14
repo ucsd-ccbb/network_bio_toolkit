@@ -6,8 +6,11 @@ Date: 10/13/17
 -------------------------------------------
 """
 
+# common packages, most likely already installed
 import pandas as pd
 import networkx as nx
+
+# uncommon packages required for this analysis
 import mygene # pip install mygene
 import ndex2 # pip install ndex2
 from ndex2.niceCXNetwork import NiceCXNetwork

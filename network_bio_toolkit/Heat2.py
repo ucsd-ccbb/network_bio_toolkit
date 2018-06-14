@@ -4,24 +4,29 @@ Author: Mikayla Webster (13webstermj@gmail.com)
 Date: 4/6/18
 -------------------------------------------
 """
-
+# our modules
 import create_graph
-reload(create_graph)
+import stat_analysis
 import heat_and_cluster
-reload(heat_and_cluster)
 import visJS2jupyter.visualizations as visualizations # pip install visJS2jupyter
+
+# common packages, most liekly already installed
+import networkx as nx
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import copy
+
+# reloading, for testing
+reload(create_graph)
+reload(stat_analysis)
+reload(heat_and_cluster)
 
 #for local testing
 #import sys
 #sys.path.append('../../../visJS2jupyter/visJS2jupyter')
 #import visualizations
 #import visJS_module
-
-import networkx as nx
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import copy
 
 class Heat:
 
@@ -323,6 +328,84 @@ class Heat:
     
         # load STRING
         self.DG_universe = create_graph.load_STRING_links(filename, confidence_filter, self.species, self.gene_type)
+
+        
+# --------------------------------------------- LOCALIZATION ------------------------------------------------------#
+    
+    def localization(self, num_reps = 10, sample_frac = 0.8, method = 'numedges', plot = True, print_counter = False):
+    
+        """
+            Function to calculate localization of your DEGs on your background network.
+            Option to compute number of edges (method = 'numedges') or largest connected component (method = 'LLC') 
+            localization analysis. Calculates by sampling sub-sections of the focal genes/random set. Percentage to sample
+            is set by sample_frac. Option to plot the distributions of random and focal gene localizaiton.
+            
+            Args:
+                num_reps: Int, number of times to randomly sample
+                sample_frac: Float, percent of sampled genes
+                method: String, to decide which type of localization analysis to run. Options: 'numedges', 'LLC', or 'both'.
+                plot: Bool, whether to plot the distributions in the output jupyter notebook cell
+                print_counter: Bool, whether to print a counter that tells you which iteration you are on (every 25 iterations).
+                               Useful when the num_reps is very high.
+                
+            Returns: 
+                numedges_list: List, the number of edges calculated for each rep, sampling over focal genes. 
+                    Empty if method = 'LLC'. 
+                numedges_rand: List, the number of edges calculated for each rep, sampling over random genes of 
+                    similar degree in the background network. Empty if method = 'LLC'.
+                LCC_list: List, the size of the largest connected component, calculated for each rep, sampling over focal genes. 
+                    Empty if method = 'numedges'. 
+                LCC_rand: List, the size of the largest connected component, calculated for each rep, sampling over random genes of 
+                    similar degree in the background network. Empty if method = 'numedges'. 
+        """
+    
+        # make sure user has run all prerequisites
+        for item in ['DG_universe', 'DEG_list']:
+            if self.check_exists(item) == False:
+                return
+    
+        return stat_analysis.localization(self.DG_universe, self.DEG_list, num_reps, sample_frac, method, plot, print_counter)
+        
+    def localization_full(self, num_reps = 200, 
+                          method = 'LCC', 
+                          print_counter = False, 
+                          label = 'focal genes',
+                          line_height = 0.1,
+                          legend_loc = 'upper left'):
+    
+        """
+            Function to calculate localization of an input set of genes (focal_genes) on a background network (Gint).
+            Option to compute number of edges (method = 'numedges') or largest connected component (method = 'LLC') 
+            localization analysis. DOes no sub-sampling. Plots the distribution of random gene localizaiton, and 
+            marks the focal set localization on distribution. Includes p-value of focal set localization.
+            
+            Args:
+                num_reps: Int, number of times to randomly sample
+                method: String, to decide which type of localization analysis to run. Options: 'numedges', 'LLC', or 'both'.
+                print_counter: Bool, whether to print a counter that tells you which iteration you are on (every 25 iterations).
+                               Useful when the num_reps is very high.
+                label: String, label for focal genes in graph legend
+                line_height: Float, the height of the red line that marks the focal gene localization
+                legend_loc: String, relative position of legend in graph. Something similar to 'upper left'.
+                
+            Returns: 
+                numedges_list: List, the number of edges calculated for each rep, over focal genes. 
+                    Empty if method = 'LLC'. 
+                numedges_rand: List, the number of edges calculated for each rep, over random genes of 
+                    similar degree in the background network. Empty if method = 'LLC'.
+                LCC_list: List, the size of the largest connected component, calculated for each rep, over focal genes. 
+                    Empty if method = 'numedges'. 
+                LCC_rand: List, the size of the largest connected component, calculated for each rep, over random genes of 
+                    similar degree in the background network. Empty if method = 'numedges'. 
+        """
+    
+        # make sure user has run all prerequisites
+        for item in ['DG_universe', 'DEG_list']:
+            if self.check_exists(item) == False:
+                return
+    
+        return stat_analysis.localization_full(self.DG_universe, self.DEG_list, num_reps, method, print_counter, label, line_height, legend_loc)
+
         
         
 #------------------------- Heat Propagation --------------------------------#

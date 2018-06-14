@@ -6,21 +6,25 @@ Date: 4/6/18
 -------------------------------------------
 """
 
-import community # pip install python-louvain
-import networkx as nx
+# our modules
 import visJS2jupyter.visJS_module as visJS_module # pip install visJS2jupyter
 import visJS2jupyter.visualizations as visualizations # pip install visJS2jupyter
+
+# common packages, most likely already installed
+import networkx as nx
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+# uncommon packages required for this analysis
+import community # pip install python-louvain
 
 #for local testing
 #import sys
 #sys.path.append('../../../visJS2jupyter/visJS2jupyter')
 #import visualizations
 #import visJS_module
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 
 # ------------------------- NETWORK VISUALIZATION FUNCTIONS -------------------#
 

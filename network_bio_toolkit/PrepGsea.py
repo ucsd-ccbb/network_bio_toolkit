@@ -7,14 +7,17 @@ Date: 5/4/18
 -------------------------------------------
 """
 
+# common packages, most likely already installed
 import pandas as pd
 import numpy as np
-import gseapy as gp
 import matplotlib.pyplot as plt
 import os.path
-import seaborn as sns
 from ipywidgets import widgets, Layout, Button, Box, FloatText, Textarea, Dropdown, Label, IntSlider, Text
 from IPython.display import display
+
+# uncommon packages required for this analysis
+import gseapy as gp # pip install gseapy
+import seaborn as sns # pip install seaborn
 
 class PrepGsea:
     
