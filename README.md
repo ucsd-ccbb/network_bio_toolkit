@@ -28,7 +28,7 @@ Please note that our code expects networkx version 1.11. We do not guarentee tha
 
 Further references:
 * For further information on matplotlib, visit [here](http://matplotlib.org/users/installing.html).
-* For further information on networkx, visit [here](https://networkx.github.io/)
+* For further information on networkx, visit [here](https://networkx.github.io/).
 
 You must also have the following packages installed:
 
@@ -76,6 +76,7 @@ Unfortunately our package is not available yet on Pypi. For now, download our co
 module: Upstream
 
 description:
+
 This package includes functions to help you determine potential upstream regulators for a set of differencially expressed genes that you supply. It was inspired by Ingenuity System's [Ingenuity Upstream Regulator Analysis in IPA®](http://pages.ingenuity.com/rs/ingenuity/images/0812%20upstream_regulator_analysis_whitepaper.pdf). Our create_graph module will help you load all of the networks you need for this analysis into networkx graph representations. Our stat_analysis package will calculate p-value and z-score statistics for each potential upstream regulator to determine each one's relevance to your input data set. stat_analysis also includes functions that display information about significant regulators as pandas dataframes or visJS2jupyter networks.
 
 ### Network Analysis Workflow
@@ -130,7 +131,9 @@ These are available under the "notebooks" folder.
 
 ## Authors
 **Mikayla Webster** (13webstermj@gmail.com)
+
 **Brin Rosenthal** (sbrosenthal@ucsd.edu)
+
 **Mengyi (Miko) Liu** (mikoliu798@gmail.com)
 
 ## License
