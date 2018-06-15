@@ -143,7 +143,7 @@ Our packages include functions for loading STRING's protein actions and protein 
 - [STRING Mus Musculus](https://string-db.org/cgi/download.pl?sessionId=pFsHqnIzSfjX&species_text=Mus+musculus)
 
 ### Background Databases from ndex2
-Our full set of available ndex databases is available [here](http://ndexbio.org/#/user/9f248194-480b-11e8-a935-0ac135e8bacf).
+Our full set of ndex databases is available [here](http://ndexbio.org/#/user/9f248194-480b-11e8-a935-0ac135e8bacf).
 
 ## Authors
 -**Mikayla Webster** (13webstermj@gmail.com)
