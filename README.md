@@ -113,33 +113,31 @@ These are available under the "notebooks" folder.
 
 ### ura_notebooks
 
-- URA_Arthritis: This notebook includes all features of the ura module. This notebook is a case study done on a data set produced by the UCSD CCBB. It focuses on the flow of the funcitons in the URA package, with empahsis on the order you should call each function.
-- URA_Basic_Example: This notebook provides details on how to use our URA package for your own analyses. 
-- URA_Entrez_example: Example notebook for how to run an analysis with entrez genes (gene symbol by default)
-- URA_Mouse_example: Example notebook for how to run an analysis with mouse genes (human by default)
-- URA_Random_Test: Randomization testing of our URA module
-- URA_huvec_brca: This notebook doubles as a validaiton notebook and a real-world use case example. We compare the results of our URA package to the results from the Ingenuity Upstream Regulator Analysis's accompanying paper: [Causal analysis approaches in Ingenuity Pathway Analysis](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3928520/).
-- URA_space: Example analysis of space mice genes.  
+- **URA_Arthritis**: This notebook includes all features of the ura module. This notebook is a case study done on a data set produced by the UCSD CCBB. It focuses on the flow of the funcitons in the URA package, with empahsis on the order you should call each function.
+- **URA_Basic_Example**: This notebook provides details on how to use our URA package for your own analyses. 
+- **URA_Entrez_example**: Example notebook for how to run an analysis with entrez genes (gene symbol by default)
+- **URA_Mouse_example**: Example notebook for how to run an analysis with mouse genes (human by default)
+- **URA_Random_Test**: Randomization testing of our URA module
+- **URA_huvec_brca**: This notebook doubles as a validaiton notebook and a real-world use case example. We compare the results of our URA package to the results from the Ingenuity Upstream Regulator Analysis's accompanying paper: [Causal analysis approaches in Ingenuity Pathway Analysis](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3928520/).
+- **URA_space**: Example analysis of space mice genes.  
 
 ### clustering_notebooks
 
-- Heat2_example: Basic example notebook fo running Heat2 on a set of mice genes. Includes all features available for our Python 2 network analysis workflow.
-- Heat2_GIANT: Example notebook using ndex2 to load [GIANT brain_top](http://giant.princeton.edu/download/) as a networkx graph.
-- Heat2_with_ndex2: Example notebook using ndex2 to load the [STRING mouse protein links database](https://string-db.org/cgi/download.pl?sessionId=pFsHqnIzSfjX&species_text=Mus+musculus) as a networkx graph.
-- Heat3_with_annotation: Basic example notebook fo running Heat3 on a set of mice genes. Includes all features available for our Python 3 network analysis workflow.
+- **Heat2_example**: Basic example notebook fo running Heat2 on a set of mice genes. Includes all features available for our Python 2 network analysis workflow.
+- **Heat2_GIANT**: Example notebook using ndex2 to load [GIANT brain_top](http://giant.princeton.edu/download/) as a networkx graph.
+- **Heat2_with_ndex2**: Example notebook using ndex2 to load the [STRING mouse protein links database](https://string-db.org/cgi/download.pl?sessionId=pFsHqnIzSfjX&species_text=Mus+musculus) as a networkx graph.
+- **Heat3_with_annotation**: Basic example notebook fo running Heat3 on a set of mice genes. Includes all features available for our Python 3 network analysis workflow.
 
-### gsea_notebooks/PrepGsea_package_examples
+### gsea_notebooks
 
-- PrepGsea_full_example: Example for using PrepGsea. If this is your first time using PrepGsea, use this notebook as your reference. 
-- PrepGsea_from_file_example: Example for realoading an already completed analysis back into jupyter notebooks.
+- **PrepGsea_full_example**: Example for using PrepGsea. If this is your first time using PrepGsea, use this notebook as your reference. 
+- **PrepGsea_from_file_example**: Example for realoading an already completed analysis back into jupyter notebooks.
 
 
 ## Authors
-**Mikayla Webster** (13webstermj@gmail.com)
-
-**Brin Rosenthal** (sbrosenthal@ucsd.edu)
-
-**Mengyi (Miko) Liu** (mikoliu798@gmail.com)
+-**Mikayla Webster** (13webstermj@gmail.com)
+-**Brin Rosenthal** (sbrosenthal@ucsd.edu)
+-**Mengyi (Miko) Liu** (mikoliu798@gmail.com)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
