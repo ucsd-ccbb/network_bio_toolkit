@@ -2,7 +2,7 @@
 
 network_bio_toolkit is toolbox of network biology methods authored by members of the [UCSD Center for Computational Biology & Bioinformatics](http://compbio.ucsd.edu).
 
-## Package summary
+## Package Summary
 
 ## Getting Started
 
