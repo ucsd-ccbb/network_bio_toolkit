@@ -1,6 +1,8 @@
 # network_bio_toolkit
 
-network_bio_toolkit is toolbox of network biology methods currently including Upstream Regulator Analysis functionality, authored by members of the [UCSD Center for Computational Biology & Bioinformatics](http://compbio.ucsd.edu).
+network_bio_toolkit is toolbox of network biology methods authored by members of the [UCSD Center for Computational Biology & Bioinformatics](http://compbio.ucsd.edu).
+
+## Package summary
 
 ## Getting Started
 
@@ -65,9 +67,6 @@ Further references:
 ### Installing
 
 Unfortunately our package is not available yet on Pypi. For now, download our code directly in order to use our toolkit.
-
-## Package summary
-
 
 ## Package tools
 
