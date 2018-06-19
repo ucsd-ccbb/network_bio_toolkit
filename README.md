@@ -80,6 +80,10 @@ This package includes functions to help you determine potential upstream regulat
 
 ### Network Analysis Workflow
 
+modules: 
+- Heat2 (Python 2 compatible version)
+- Heat3 (Python 3 compatible version)
+
 This package provides tools to conduct an integrated network analysis of a set of differentially expressed genes.  The workflow includes the following steps:
 
 - Integrate set of differentially expressed (DE) genes with a user-specified interactome.  Interactome may be loaded from NDEX (no downloading required)
@@ -90,9 +94,6 @@ This package provides tools to conduct an integrated network analysis of a set o
 - We additionally provide layout options to focus on individual clusters, a table containing the full analysis results, and export options to cytopscape for further formatting.  
 
 
-modules: 
-- Heat2 (Python 2 compatible version)
-- Heat3 (Python 3 compatible version)
 
 Note:
 Annotation of clusters/over-representation analysis is only available for Heat3.py because gprofiler requires python 3. 
