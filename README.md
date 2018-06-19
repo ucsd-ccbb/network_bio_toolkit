@@ -102,6 +102,7 @@ Annotation of clusters/over-representation analysis is only available for Heat3.
 module: PrepGsea
 
 description:
+The gene set enrichment analysis workflow provides an interactive interface to the gseapy tools, consistent with the format used in our other tools. The user provides an expression file, an experiment metadata file, and selects the desired comparison for GSEA from provided interactive widgets. The resulting enriched pathways and GSEA figures are saved in a specified output folder.   We also provide tools to load pre-computed results, and to plot the enriched pathways in barcharts and heatmaps for inspection of individually up or down regulated genes.    
 
 ## Example Notebooks
 
