@@ -4,6 +4,10 @@ network_bio_toolkit is toolbox of network biology methods authored by members of
 
 ## Package Summary
 
+Network biology is quickly becoming an indispensable tool for elucidating dysregulated biological pathways and furthering understanding in disease. However, network analysis is intimidating to many researchers.  We present an integrated network analysis toolkit, network_bio_toolkit, built upon our previous interactive network visualization tool, visJS2jupyter, to provide three common network analysis workflows for RNAseq data, from start to finish, requiring only an expression file, or a list of differentially expressed genes.  The tool is designed for use in Jupyter notebooks, to promote reproducible research.
+
+This package includes a set of start-to-finish functions for three common network analysis pipelines: upstream regulator analysis, network propagation and clustering, and gene set enrichment analysis. The upstream regulator analysis pipeline includes localization, transcription factor enrichment, and transcription factor activation state prediction methods. The network propagation and clustering pipeline includes network propagation, clustering, and annotation functionality. The gene set enrichment analysis includes easy-to-use data filtering methods, that help the user prep their data as input for GSEA’s enrichment calculation function. Each pipeline includes functions to easily load and process a variety of genome networks, such as STRING and GIANT, from NDEXbio, eliminating the need for downloading large and unwieldy network files. Each pipeline also has data visualization functions, so interpreting results from our pipelines is intuitive. Many of the analysis components of each pipeline are modular; the user can pick and choose which functions are relevant to their data and leave out unnecessary steps. We demonstrate the functionality of network_bio_toolkit by analyzing arthritis, breast cancer, HUVEC, and space mice differential expression gene sets using our three pipelines.
+
 ## Getting Started
 
 These instructions will get a copy of the package up and running on your local machine.
@@ -114,6 +118,7 @@ Annotation of clusters/over-representation analysis is only available for Heat3.
 module: PrepGsea
 
 description:
+
 The gene set enrichment analysis workflow provides an interactive interface to the gseapy tools, consistent with the format used in our other tools. 
 
 workflow:
