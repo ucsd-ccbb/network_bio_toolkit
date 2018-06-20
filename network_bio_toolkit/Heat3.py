@@ -12,7 +12,7 @@ import heat_and_cluster
 import visJS2jupyter.visualizations as visualizations # pip install visJS2jupyter
 import visJS2jupyter.visJS_module as visJS_module
 
-# common packages, most liekly already installed
+# common packages, most likely already installed
 import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -749,7 +749,7 @@ class Heat:
                                           graph_id = graph_id,
                                           **kwargs)
                                           
-    def cluster_legend(self, cluster_size_cut_off = 5):
+    def cluster_legend(self, cluster_size_cut_off = 0):
     
         """
             This draws a matplotlib legend displaying the colors associated with each cluster
@@ -828,18 +828,19 @@ class Heat:
         # map nodes to bool value of whether they are a DEG or not
         node_to_DEG_bool = {node:True if node in self.DEG_list else False for node in self.DG_universe}
 
-        for node in self.DG_universe:
-            try:
-                cluster = self.node_to_cluster[node]
-                seed_node = node_to_DEG_bool[node]
-                anno = self.cluster_to_annotation[self.node_to_cluster[node]]
-                lfc = self.node_to_lfc[node]
-                p = self.node_to_pvalue[node]
+        for (node, cluster) in self.node_to_cluster.items():
+        
+            try: seed_node = node_to_DEG_bool[node]
+            except: seed_node = 'N/A'
+            
+            try: lfc = self.node_to_lfc[node]
+            except: lfc = 'N/A'
                 
-                to_write_string = str(node) + ',' + str(cluster) + ',' + str(seed_node) + ',' + str(anno) + ',' + str(lfc) + ',' + str(p) + '\n'
-                f.write(to_write_string) 
-            except:
-                pass
+            try: p = self.node_to_pvalue[node]
+            except: p = 'N/A'
+
+            to_write_string = str(node) + ',' + str(cluster) + ',' + str(seed_node) + ',' + str(lfc) + ',' + str(p) + '\n'
+            f.write(to_write_string) 
         
 
 #------------------ HELPER FUNCTIONS ------------------------------------#  

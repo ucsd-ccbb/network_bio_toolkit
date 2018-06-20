@@ -139,10 +139,11 @@ def draw_clustering(DG_universe, seed_nodes,
     # keep only the largest connected component
     G_top_genes = nx.Graph(G_top_genes)
     if largest_connected_component:
-        G_top_genes = max(nx.connected_component_subgraphs(G_top_genes), key=len)
+        G_top_genes = max(nx.connected_component_subgraphs(G_top_genes), key = len)
 
     # cluster hottest genes
     node_to_cluster = community.best_partition(G_top_genes)
+    node_to_cluster_full = node_to_cluster
 
     nodes = G_top_genes.nodes()
     edges = G_top_genes.edges()
@@ -188,7 +189,7 @@ def draw_clustering(DG_universe, seed_nodes,
         bias_position_by_partition(pos, node_to_cluster, r = r, x_offset = x_offset, y_offset = y_offset); # modifies pos in place
 
     # set the title of each node
-    nx.set_node_attributes(G_top_genes, 'cluster', node_to_cluster)
+    nx.set_node_attributes(G_top_genes, name = 'cluster', values = node_to_cluster)
     node_titles = [str(node[0]) + '<br/>cluster = ' + str(node[1]['cluster'])
            for node in G_top_genes.nodes(data=True)]
     node_titles = dict(zip(nodes, node_titles))
@@ -217,7 +218,7 @@ def draw_clustering(DG_universe, seed_nodes,
            'target':node_map[edges[i][1]],
            'color':'grey'} for i in range(len(edges))]
 
-    return node_to_cluster, visJS_module.visjs_network(nodes_dict,edges_dict,
+    return node_to_cluster_full, visJS_module.visjs_network(nodes_dict,edges_dict,
                                       node_label_field = 'node_label',
                                       node_size_multiplier = node_size_multiplier,
                                       physics_enabled = physics_enabled,
@@ -242,7 +243,7 @@ def draw_legend(vmin, vmax, cmap = mpl.cm.bwr, label = 'Units'):
     """
 
     # Make a figure and axes with dimensions as desired.
-    fig = plt.figure(figsize=(8, 3))
+    fig = plt.figure(figsize = (8, 3))
     ax = fig.add_axes([0.05, 0.80, 0.9, 0.15])
 
     # Set the colormap and norm to correspond to vmin and vmax of your original graph

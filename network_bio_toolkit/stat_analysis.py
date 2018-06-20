@@ -59,7 +59,7 @@ def localization(Gint, focal_genes, num_reps = 10, sample_frac = 0.8, method = '
     
     # create a lookup table for degree and index
     actual_degree_to_bin_df_idx = {}
-    for i in range(1, bin_df['max_degree'].max() + 1):
+    for i in range(0, bin_df['max_degree'].max() + 1):
         idx_temp = bin_df[ (bin_df['min_degree'].lt(i + 1)) & (bin_df['max_degree'].gt(i - 1)) ].index.tolist()
 
         if len(idx_temp) > 0: # there are some degrees which aren't represented in the graph
@@ -97,18 +97,18 @@ def localization(Gint, focal_genes, num_reps = 10, sample_frac = 0.8, method = '
             numedges_list.append(numedges_temp)
             
             # number edges calc on random sample
-            numedges_temp_rand=len(nx.subgraph(Gint,seed_random).edges())
+            numedges_temp_rand = len(nx.subgraph(Gint,seed_random).edges())
             numedges_rand.append(numedges_temp_rand)
             
         if (method == 'LCC') or (method == 'both'):
             
             # LLC calc on focal set
-            G_sub_temp = nx.subgraph(Gint, focal_80)
-            G_sub_temp = max(nx.connected_component_subgraphs(nx.Graph(G_sub_temp)), key = len)
+            G_sub_temp = nx.Graph(nx.subgraph(Gint, focal_80))
+            G_sub_temp = max(nx.connected_component_subgraphs(G_sub_temp), key = len)
             LCC_list.append(len(G_sub_temp.nodes()))
             
             # LLC calc on random sample
-            G_sub_temp = nx.subgraph(Gint, seed_random)
+            G_sub_temp = nx.Graph(nx.subgraph(Gint, seed_random))
             G_sub_temp = max(nx.connected_component_subgraphs(G_sub_temp), key=len)
             LCC_rand.append(len(G_sub_temp.nodes()))
     
@@ -212,13 +212,13 @@ def get_degree_binning(g, bin_size, lengths = None):
     degree_to_nodes = {}
     
     if sys.version_info >= (3, 0):
-        for node, degree in g.degree().items():
+        for node, degree in dict(g.degree()).items():
             if lengths is not None and node not in lengths:
                 continue
             degree_to_nodes.setdefault(degree, []).append(node)
     
     else:
-        for node, degree in g.degree().iteritems():
+        for node, degree in dict(g.degree()).iteritems():
             if lengths is not None and node not in lengths:
                 continue
             degree_to_nodes.setdefault(degree, []).append(node)
