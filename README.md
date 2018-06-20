@@ -76,15 +76,28 @@ module: Upstream
 
 description:
 
-This package includes functions to help you determine potential upstream regulators for a set of differentially expressed genes that you supply. It was inspired by Ingenuity System's [Ingenuity Upstream Regulator Analysis in IPA®](http://pages.ingenuity.com/rs/ingenuity/images/0812%20upstream_regulator_analysis_whitepaper.pdf). Our create_graph module will help you load all of the networks you need for this analysis into networkx graph representations. Our stat_analysis package will calculate p-value and z-score statistics for each potential upstream regulator to determine each one's relevance to your input data set. stat_analysis also includes functions that display information about significant regulators as pandas dataframes or visJS2jupyter networks.
+This package includes functions to help you determine potential upstream regulators for a set of differentially expressed genes that you supply. It was inspired by Ingenuity System's [Ingenuity Upstream Regulator Analysis in IPA®](http://pages.ingenuity.com/rs/ingenuity/images/0812%20upstream_regulator_analysis_whitepaper.pdf). 
 
-### Network Analysis Workflow
+workflow:
+
+- Integrate set of differentially expressed (DE) genes with a user-specified interactome.  Interactome may be loaded from NDEX (no downloading required)
+- Seed genes for network analysis defined by user-specified significance cutoffs in DE gene file.  User may select a number of options here, including whether to use gene symbol, or entrez id, and which columns to use for significance cutoffs and fold change cutoffs. 
+- Network localization analysis of DE genes, using one of two methods.  The first method, 'num_edges', calculates the number of edges contained in the subgraph composed of a sub-sampling of the DE genes, and compares to degree-matched, randomly selected genes.  This method is similar to the number of edges p-value used in STRING-DB. The second method, 'LCC', calculates the size of the largest connected component in the DE genes subgraph, compared to degree-matached randomly selected genes.  This method was used in Menche et al 2015 (http://science.sciencemag.org/content/347/6224/1257601).  Sampling and randomization are repeated a user-specified number of times (we recommend > 100).  Network localization allows for determining if the input seed gene set is more connected in the network than would be expected by chance, and thus likely representing an underlying biological mechanism/pathway.  
+- Transcription factor (TF) enrichment enrichment calculations, using a hypergeometric test (calculates the log of the p-value)
+- TF activation state prediction, represented as a signed z-score. TFs assigned positive z-scores are activating, while negative z-scores are inhibiting. Significance of z-score indicates the confidence of the activation state prediction.
+- Visualization methods to pinpoint most significant activating and inhbiting TFs, display distribution of TFs as a histogram, and display individual TF-plus-downstream-target networks using visJS2jupyter.
+
+### Heat Propagation and Clustering Analysis Workflow
 
 modules: 
 - Heat2 (Python 2 compatible version)
 - Heat3 (Python 3 compatible version)
 
-This package provides tools to conduct an integrated network analysis of a set of differentially expressed genes.  The workflow includes the following steps:
+description: 
+
+This package provides tools to conduct an integrated network analysis of a set of differentially expressed genes.  
+
+workflow:
 
 - Integrate set of differentially expressed (DE) genes with a user-specified interactome.  Interactome may be loaded from NDEX (no downloading required)
 - Seed genes for network analysis defined by user-specified significance cutoffs in DE gene file.  User may select a number of options here, including whether to use gene symbol, or entrez id, and which columns to use for significance cutoffs and fold change cutoffs. 
@@ -92,8 +105,6 @@ This package provides tools to conduct an integrated network analysis of a set o
 - Network propagation from DE gene list.  Network propagation provides information about the local neighborhood of a set of ‘seed’ genes in network space, and genes that have high network propagation scores are likely to be related to these ‘seed’ genes.  See https://www.nature.com/articles/nrg.2017.38 for a review.
 - Clustering of resulting nearest N (we recommend N = 300-500) network proximal genes to input DE genes, forming a 'proximal subnetwork'.  Clustering allows for exploration and annotation of the pathways represented in the proximal subnetwork.  Clustering is conducted using a network modularity maximization algorithm (https://github.com/taynaud/python-louvain, http://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008/meta), which identifies groups of nodes which are more highly connected within the group than between groups.  Annotation of clusters is performed using over-representation analysis, with gprofiler, using as the background set the N genes in the proximal subnetwork.  
 - We additionally provide layout options to focus on individual clusters, a table containing the full analysis results, and export options to cytopscape for further formatting.  
-
-
 
 Note:
 Annotation of clusters/over-representation analysis is only available for Heat3.py because gprofiler requires python 3. 
@@ -103,7 +114,14 @@ Annotation of clusters/over-representation analysis is only available for Heat3.
 module: PrepGsea
 
 description:
-The gene set enrichment analysis workflow provides an interactive interface to the gseapy tools, consistent with the format used in our other tools. The user provides an expression file, an experiment metadata file, and selects the desired comparison for GSEA from provided interactive widgets. The resulting enriched pathways and GSEA figures are saved in a specified output folder.   We also provide tools to load pre-computed results, and to plot the enriched pathways in barcharts and heatmaps for inspection of individually up or down regulated genes.    
+The gene set enrichment analysis workflow provides an interactive interface to the gseapy tools, consistent with the format used in our other tools. 
+
+workflow:
+
+- The user provides an expression file and an experiment metadata file
+- The user selects the desired comparison for GSEA from provided interactive widgets. 
+- The resulting enriched pathways and GSEA figures are saved in a specified output folder (we also provide tools to load pre-computed results)
+- The user may plot the enriched pathways in barcharts and heatmaps for inspection of individually up or down regulated genes.    
 
 ## Example Notebooks
 
@@ -144,9 +162,9 @@ Our packages include functions for loading STRING's protein actions and protein 
 Our full set of ndex databases is available [here](http://ndexbio.org/#/user/9f248194-480b-11e8-a935-0ac135e8bacf).
 
 ## Authors
--**Mikayla Webster** (13webstermj@gmail.com)
--**Brin Rosenthal** (sbrosenthal@ucsd.edu)
--**Mengyi (Miko) Liu** (mikoliu798@gmail.com)
+- **Mikayla Webster** (13webstermj@gmail.com)
+- **Brin Rosenthal** (sbrosenthal@ucsd.edu)
+- **Mengyi (Miko) Liu** (mikoliu798@gmail.com)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
