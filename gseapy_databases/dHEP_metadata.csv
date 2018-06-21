@@ -1,0 +1,31 @@
+Sample_name,Sample_Name2,mouse genotype,short_genotype,Model,Treatment,Tissue
+dHEP_518_A_NT,dHEP-518-A-NT,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_HFD_alcohol,Liver
+dHEP_520_A_NT,dHEP-520-A-NT,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_HFD_alcohol,Liver
+dHEP_549_A_NT,dHEP-549-A-NT,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_HFD_alcohol,Liver
+dHEP_550_A_NT,dHEP-550-A-NT,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_HFD_alcohol,Liver
+F_F_503_A_NT,F/F-503-A-NT,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_HFD_alcohol,Liver
+F_F_523_A_NT,F/F-523-A-NT,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_HFD_alcohol,Liver
+F_F_581_A_NT,F/F-581-A-NT,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_HFD_alcohol,Liver
+F_F_595_A_NT,F/F-595-A-NT,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_HFD_alcohol,Liver
+dHEP_155_NC_NT,dHEP-155-NC-NT,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_only,Liver
+dHEP_164_NC_NT,dHEP-164-NC-NT,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_only,Liver
+dHEP_165_NC_NT,dHEP-165-NC-NT,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_only,Liver
+F_F_157_NC_NT,F/F-157-NC-NT,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_only,Liver
+F_F_158_NC_NT,F/F-158-NC-NT,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_only,Liver
+F_F_159_NC_NT,F/F-159-NC-NT,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_only,Liver
+dHEP_518_A_T1,dHEP-518-A-T1,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_HFD_alcohol,liver_tumor
+dHEP_520_A_T,dHEP-520-A-T,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_HFD_alcohol,liver_tumor
+dHEP_549_A_T,dHEP-549-A-T,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_HFD_alcohol,liver_tumor
+dHEP_550_A_T,dHEP-550-A-T,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_HFD_alcohol,liver_tumor
+F_F_503_A_T1,F/F-503-A-T1,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_HFD_alcohol,liver_tumor
+F_F_523_A_T1,F/F-523-A-T1,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_HFD_alcohol,liver_tumor
+F_F_581_A_T,F/F-581-A-T,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_HFD_alcohol,liver_tumor
+F_F_595_A_T,F/F-595-A-T,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_HFD_alcohol,liver_tumor
+dHEP_155_NC_T,dHEP-155-NC-T,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_only,liver_tumor
+dHEP_164_NC_T,dHEP-164-NC-T,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_only,liver_tumor
+dHEP_165_NC_T,dHEP-165-NC-T,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,DEN ,DEN_only,liver_tumor
+F_F_167_NC_T,F/F-167-NC-T,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_only,liver_tumor
+F_F_168_NC_T,F/F-168-NC-T,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_only,liver_tumor
+F_F_169_NC_T,F/F-169-NC-T,IL-17RA-flox/flox,IL17RA_floxflox,DEN ,DEN_only,liver_tumor
+F_F_184_NI,F/F-184-NI,IL-17RA-flox/flox,IL17RA_floxflox,no_injury,no_injury,Liver
+dHEP_178_NI,dHEP-178-NI,Alb-Cre;IL-17RA-flox/flox,AlbCre_IL17RA_floxflox,no_injury,no_injury,Liver
