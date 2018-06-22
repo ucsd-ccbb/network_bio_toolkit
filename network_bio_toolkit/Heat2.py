@@ -590,7 +590,7 @@ class Heat:
         plt.xlim([0, 3])
         plt.ylim([-5, len(cluster_to_color) + 5])
         
-    def draw_legend(self, vmin, vmax, cmap = mpl.cm.bwr, label = 'Units'):
+    def draw_legend(self, cmap = mpl.cm.bwr, label = 'Units'):
     
         """
             This draws a colormap in a cell that is colored with cmap and ranges from vmin to vmax. 
@@ -603,8 +603,15 @@ class Heat:
 
             Returns: A matplotlib colorbar
         """
-    
-        heat_and_cluster.draw_legend(vmin, vmax, cmap, label)
+        
+        # make sure user has run all prerequisites
+        for item in ['node_to_lfc']:
+            if self.check_exists(item) == False:
+                return
+        
+        min_lfc = min(zip(*self.node_to_lfc.items())[1])
+        max_lfc = max(zip(*self.node_to_lfc.items())[1])
+        heat_and_cluster.draw_legend(min_lfc, max_lfc, cmap, label)
                     
 #------------------ SAVE DATA TO FILE -----------------------------------#
 

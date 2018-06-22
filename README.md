@@ -76,13 +76,11 @@ Unfortunately our package is not available yet on Pypi. For now, download our co
 
 ### Upstream Regulator Analysis Workflow
 
-module: Upstream
+**module**: Upstream
 
-description:
+**description**: This package includes functions to help you determine potential upstream regulators for a set of differentially expressed genes that you supply. It was inspired by Ingenuity System's [Ingenuity Upstream Regulator Analysis in IPA®](http://pages.ingenuity.com/rs/ingenuity/images/0812%20upstream_regulator_analysis_whitepaper.pdf). 
 
-This package includes functions to help you determine potential upstream regulators for a set of differentially expressed genes that you supply. It was inspired by Ingenuity System's [Ingenuity Upstream Regulator Analysis in IPA®](http://pages.ingenuity.com/rs/ingenuity/images/0812%20upstream_regulator_analysis_whitepaper.pdf). 
-
-workflow:
+**workflow**:
 
 - Integrate set of differentially expressed (DE) genes with a user-specified interactome.  Interactome may be loaded from NDEX (no downloading required)
 - Seed genes for network analysis defined by user-specified significance cutoffs in DE gene file.  User may select a number of options here, including whether to use gene symbol, or entrez id, and which columns to use for significance cutoffs and fold change cutoffs. 
@@ -93,15 +91,13 @@ workflow:
 
 ### Heat Propagation and Clustering Analysis Workflow
 
-modules: 
+**modules**: 
 - Heat2 (Python 2 compatible version)
 - Heat3 (Python 3 compatible version)
 
-description: 
+**description**: This package provides tools to conduct an integrated network analysis of a set of differentially expressed genes.  
 
-This package provides tools to conduct an integrated network analysis of a set of differentially expressed genes.  
-
-workflow:
+**workflow**:
 
 - Integrate set of differentially expressed (DE) genes with a user-specified interactome.  Interactome may be loaded from NDEX (no downloading required)
 - Seed genes for network analysis defined by user-specified significance cutoffs in DE gene file.  User may select a number of options here, including whether to use gene symbol, or entrez id, and which columns to use for significance cutoffs and fold change cutoffs. 
@@ -110,18 +106,15 @@ workflow:
 - Clustering of resulting nearest N (we recommend N = 300-500) network proximal genes to input DE genes, forming a 'proximal subnetwork'.  Clustering allows for exploration and annotation of the pathways represented in the proximal subnetwork.  Clustering is conducted using a network modularity maximization algorithm (https://github.com/taynaud/python-louvain, http://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008/meta), which identifies groups of nodes which are more highly connected within the group than between groups.  Annotation of clusters is performed using over-representation analysis, with gprofiler, using as the background set the N genes in the proximal subnetwork.  
 - We additionally provide layout options to focus on individual clusters, a table containing the full analysis results, and export options to cytopscape for further formatting.  
 
-Note:
-Annotation of clusters/over-representation analysis is only available for Heat3.py because gprofiler requires python 3. 
+**Note**: Annotation of clusters/over-representation analysis is only available for Heat3.py because gprofiler requires python 3. 
 
 ### Gene Set Enrichment Analysis Workflow
 
-module: PrepGsea
+**module**: PrepGsea
 
-description:
+**description**: The gene set enrichment analysis workflow provides an interactive interface to the gseapy tools, consistent with the format used in our other tools. 
 
-The gene set enrichment analysis workflow provides an interactive interface to the gseapy tools, consistent with the format used in our other tools. 
-
-workflow:
+**workflow**:
 
 - The user provides an expression file and an experiment metadata file
 - The user selects the desired comparison for GSEA from provided interactive widgets. 
