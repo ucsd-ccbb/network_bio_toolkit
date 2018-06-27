@@ -59,18 +59,22 @@ To install these packages, please run the following commands, respectively.
 ```
 
 Further references:
-* visJS2jupyter is a network visualization tool created by us! Visit [here](https://ucsd-ccbb.github.io/visJS2jupyter/) for information about our package.
-* mygene is a package we use to translate between different gene naming conventions. Visit [here](http://mygene.info/) for further information.
-* ndex2 allows us to store some of our larger databases so you don't have to download any huge files. Just load the networkx graphs right from their servers! Visit [here](http://ndexbio.org/#/) for further information.
-* python-louvain (community) is the package we use to perform clustering analysis. Visit [here](https://github.com/taynaud/python-louvain) for further information.
-* gprofiler-official is the package we use to annotate our clusters. This package requires Python 3. Visit [here](https://biit.cs.ut.ee/gprofiler/page.cgi?apis) for further information. 
-* gseapy is a package that performs gene set enrichment analysis. Visit [here](http://gseapy.readthedocs.io/en/latest/introduction.html) for further information.
-* seaborn is a package that makes pretty histograms!  Visit [here](https://seaborn.pydata.org/) for further information.
+* **visJS2jupyter** is a network visualization tool created by us! Visit [here](https://ucsd-ccbb.github.io/visJS2jupyter/) for information about our package.
+* **mygene** is a package we use to translate between different gene naming conventions. Visit [here](http://mygene.info/) for further information.
+* **ndex2** allows us to store some of our larger databases so you don't have to download any huge files. Just load the networkx graphs right from their servers! Visit [here](http://ndexbio.org/#/) for further information.
+* **python-louvain** (community) is the package we use to perform clustering analysis. Visit [here](https://github.com/taynaud/python-louvain) for further information.
+* **gprofiler-official** is the package we use to annotate our clusters. This package requires Python 3. Visit [here](https://biit.cs.ut.ee/gprofiler/page.cgi?apis) for further information. 
+* **gseapy** is a package that performs gene set enrichment analysis. Visit [here](http://gseapy.readthedocs.io/en/latest/introduction.html) for further information.
+* **seaborn** is a package that makes pretty histograms!  Visit [here](https://seaborn.pydata.org/) for further information.
 
 
 ### Installing
 
-Unfortunately our package is not available yet on Pypi. For now, download our code directly in order to use our toolkit.
+Either download our package from github or pip install from pypi.
+
+```
+pip install network_bio_toolkit
+```
 
 ## Package tools
 
@@ -133,7 +137,7 @@ These are available under the "notebooks" folder.
 - **URA_Mouse_example**: Example notebook for how to run an analysis with mouse genes (human by default)
 - **URA_Random_Test**: Randomization testing of our URA module
 - **URA_huvec_brca**: This notebook doubles as a validaiton notebook and a real-world use case example. We compare the results of our URA package to the results from the Ingenuity Upstream Regulator Analysis's accompanying paper: [Causal analysis approaches in Ingenuity Pathway Analysis](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3928520/).
-- **URA_space**: Example analysis of space mice genes.  
+- **URA_space**: This analysis was conducted on the liver genes of NASA lab mice who had experienced space flight. Space mice!
 
 ### clustering_notebooks
 
@@ -144,8 +148,12 @@ These are available under the "notebooks" folder.
 
 ### gsea_notebooks
 
-- **PrepGsea_full_example**: Example for using PrepGsea. If this is your first time using PrepGsea, use this notebook as your reference. 
+- **PrepGsea_basic_example**: Example for using PrepGsea. If this is your first time using PrepGsea, use this notebook as your reference. 
 - **PrepGsea_from_file_example**: Example for realoading an already completed analysis back into jupyter notebooks.
+
+### general_notebooks
+
+- Look [here](https://bl.ocks.org/m1webste/raw/150c2f9f1c00209f02cbd0e6c504de60/) for an example of all three pipelines in one notebook. This analysis was conducted on the kidney genes of NASA lab mice who had experienced space flight. The actual notebook that bl.ocks page was derived from is available in our notebooks/general_notebooks folder.
 
 
 ## Misc
