@@ -160,10 +160,10 @@ class Upstream:
         for item in ['gene_type', 'species', 'TF_list', 'DG_universe', 'DG_TF', 'DEG_list', 'DEG_filename',
                      'DEG_to_pvalue', 'DEG_to_updown', 'DEG_full_graph', 'tf_target_enrichment',
                      'tf_enrichment', 'z_scores']:
-            print (item + ': ')
+            print(item + ': ')
             exists = self.check_exists(item)
             if exists == True:
-                print str(type(self.string_to_item[item])) + '\n'
+                print(str(type(self.string_to_item[item])) + '\n')
         return '\n'
 
 
@@ -246,7 +246,7 @@ class Upstream:
         elif item == 'tf_enrichment': self.tf_enrichment = value
         elif item == 'z_scores': self.z_scores = value
         else:
-            print 'The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
+            print('The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
                   + 'gene_type\n' \
                   + 'species\n' \
                   + 'TF_list\n' \
@@ -259,7 +259,7 @@ class Upstream:
                   + 'DEG_full_graph\n' \
                   + 'tf_target_enrichment\n' \
                   + 'tf_enrichment\n' \
-                  + 'z_scores\n\n'
+                  + 'z_scores\n\n')
 
 
 
@@ -753,10 +753,10 @@ class Upstream:
 
         try:
             if (type(self.string_to_item[item]) == type(None)):
-                print self.item_to_message[item]
+                print(self.item_to_message[item])
                 return False
         except:
-            print 'The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
+            print('The item you specified (' + str(item) + ') is not valid. Please specify one of the following variables:\n' \
                   + '- gene_type\n' \
                   + '- species\n' \
                   + '- TF_list\n' \
@@ -769,7 +769,7 @@ class Upstream:
                   + '- DEG_full_graph\n' \
                   + '- tf_target_enrichment\n' \
                   + '- tf_enrichment\n' \
-                  + '- z_scores\n\n'
+                  + '- z_scores\n\n')
             return False
 
         return True

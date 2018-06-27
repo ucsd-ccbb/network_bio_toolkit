@@ -17,6 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats
 import sys
+from scipy.special import ndtr
 
 # uncommon packages required for this analysis
 import seaborn as sns # pip install seaborn
@@ -185,9 +186,10 @@ def localization_full(Gint, focal_genes,
         title = 'largest connected component'
 
     # plot distributions for non-sampled case
+    fig, ax = plt.subplots(figsize = (12, 7))
     sns.set_style('white') 
     plt.vlines(np.mean(analysis_list), ymin = 0, ymax = line_height, color = 'r', lw = 2, label = label)
-    sns.kdeplot(analysis_rand, color = 'k', lw = 2, alpha = 0.5, shade = True, label = 'random')
+    sns.kdeplot(analysis_rand, ax = ax, color = 'k', lw = 2, alpha = 0.5, shade = True, label = 'random')
     plt.legend(loc = legend_loc, fontsize = 12)
     plt.ylabel('frequency', fontsize = 16)
     plt.xlabel(title, fontsize = 16)
@@ -195,7 +197,6 @@ def localization_full(Gint, focal_genes,
     # print the z-score and fdr
     analysis_z = (np.mean(analysis_list) - np.mean(analysis_rand))/float(np.std(analysis_rand))
 
-    from scipy.special import ndtr
     print(1 - ndtr(analysis_z))
 
     plt.title('permutation p = ' + str(1 - ndtr(analysis_z)))
@@ -677,6 +678,9 @@ def compare_genes(z_scores, genes_to_rank, fig_size = (12, 7), font_size = 12, a
     # plot points
     plt.figure(figsize = fig_size)
     ax = sns.distplot(z_scores_hist, kde = True)
+    plt.ylabel('frequency', fontsize = 16)
+    plt.xlabel('z-score', fontsize = 16)
+    plt.title('TF Activation State Distribution', fontsize = 18)
     plt.scatter(x_points, y_points, marker = '^', s = 200, c = 'r')
 
     # annotate points

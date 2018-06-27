@@ -698,7 +698,7 @@ class Heat:
         if annotation == False:
             node_labels = {n:str(n) if n in seed_nodes else '' for n in G_top_genes.nodes()}
         else:
-            node_labels = {n:'' for n in G_top_genes.nodes()}
+            node_labels = {n:str(n) if n in seed_nodes else '' for n in G_top_genes.nodes()}
             for k,v in cluster_to_annotation.items():
                 node_labels[v] = v
                 
@@ -807,8 +807,8 @@ class Heat:
             if self.check_exists(item) == False:
                 return
         
-        min_lfc = min(zip(*self.node_to_lfc.items())[1])
-        max_lfc = max(zip(*self.node_to_lfc.items())[1])
+        min_lfc = min(list(zip(*self.node_to_lfc.items()))[1])
+        max_lfc = max(list(zip(*self.node_to_lfc.items()))[1])
         heat_and_cluster.draw_legend(min_lfc, max_lfc, cmap, label)
         
 #------------------ SAVE DATA TO FILE -----------------------------------#
