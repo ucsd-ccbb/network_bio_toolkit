@@ -82,7 +82,7 @@ pip install network_bio_toolkit
 
 **module**: Upstream
 
-**description**: This package includes functions to help you determine potential upstream regulators for a set of differentially expressed genes that you supply. It was inspired by Ingenuity System's [Ingenuity Upstream Regulator Analysis in IPA®](http://pages.ingenuity.com/rs/ingenuity/images/0812%20upstream_regulator_analysis_whitepaper.pdf). 
+**description**: This package includes functions to help you determine potential upstream regulators for a set of differentially expressed genes that you supply. 
 
 **workflow**:
 
